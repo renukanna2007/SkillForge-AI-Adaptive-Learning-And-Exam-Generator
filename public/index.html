@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillForge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #f4b400 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: white;
+      text-align: center;
+    }
+    .box {
+      background: rgba(255,255,255,0.1);
+      padding: 40px;
+      border-radius: 20px;
+      max-width: 500px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    h1 { font-size: 2.8rem; margin-bottom: 15px; }
+    p { opacity: 0.9; margin-bottom: 10px; line-height: 1.4; }
+    button {
+      margin-top: 20px;
+      padding: 15px 40px;
+      border: none;
+      border-radius: 10px;
+      background: #f4b400;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #1e3c72;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      transition: 0.3s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>🎓 SkillForge</h1>
+    <p>SkillForge is your personal learning hub where you can explore courses, track your progress, and stay organized with quizzes, exams, and announcements.</p>
+    <p>Log in as a student or admin, view rich dashboards, chat directly, and manage your entire learning journey in one colorful, easy-to-use app.</p>
+    <button onclick="goNext()">Continue</button>
+  </div>
+  <script>
+    function goNext() {
+      window.location.href = "/auth";
+    }
+  </script>
+</body>
+</html>

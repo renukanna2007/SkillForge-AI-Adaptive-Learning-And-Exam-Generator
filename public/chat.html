@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 Live Chat - SkillForge</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="chat-page">
+        <!-- 🔝 HEADER -->
+        <div class="chat-header">
+            <button class="back-btn" onclick="goBackToDashboard()">
+                ← Back to Dashboard
+            </button>
+            <div class="chat-title">
+                <h1>💬 Live Support Chat</h1>
+                <span id="connectionStatus" style="font-size: 0.9rem; color: #ef4444;">🔴 Connecting...</span>
+            </div>
+            <div class="online-status">
+                <span class="status-dot offline" id="adminStatus"></span>
+                <span id="onlineCount">0 online</span>
+            </div>
+        </div>
+
+        <!-- 📱 MAIN CHAT CONTAINER -->
+        <div class="chat-main-container">
+            <!-- 👥 SIDEBAR - Online Users -->
+            <div class="chat-sidebar">
+                <div class="sidebar-header">
+                    <h3>👥 Online Users</h3>
+                    <span class="online-badge" id="onlineBadge">0</span>
+                </div>
+                <div class="online-users-list" id="onlineUsersList">
+                    <div class="user-item empty">
+                        <p>Connecting to chat...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 💬 MAIN CHAT AREA -->
+            <div class="chat-main">
+                <!-- Partner Info -->
+                <div class="chat-partner-info">
+                    <div class="partner-avatar" id="partnerAvatar">👤</div>
+                    <div class="partner-details">
+                        <h3 id="partnerName">Waiting for connection...</h3>
+                        <span id="partnerRole" class="partner-role">Connecting...</span>
+                    </div>
+                    <div id="currentUserInfo" class="current-user-info">
+                        <span id="currentUserName">-</span> 
+                        <span id="currentUserRole" class="current-user-role">-</span>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message">
+                        <div class="message bot">
+                            <div class="message-bubble">
+                                👋 Welcome to <strong>SkillForge Live Chat</strong>!<br><br>
+                                ${currentUser.role === 'admin' ? 
+                                    '📢 Students can now message you directly for support.' : 
+                                    '🎓 Admin will reply to your doubts shortly. Ask anything about courses, quizzes, or technical issues!'
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📝 INPUT AREA -->
+                <div class="chat-input-area">
+                    <div class="typing-indicator" id="typingIndicator"></div>
+                    <div class="input-container">
+                        <input 
+                            type="text" 
+                            id="messageInput" 
+                            placeholder="Type your message here... (Enter to send)"
+                            maxlength="1000"
+                        >
+                        <button id="sendBtn" onclick="sendMessage()">
+                            <span>Send</span>
+                            <span class="send-icon">➤</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat-script.js"></script>
+</body>
+</html>

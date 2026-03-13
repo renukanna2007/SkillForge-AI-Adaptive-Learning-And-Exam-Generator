@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillForge - Register</title>
+  <style>
+    body{
+      font-family:'Segoe UI',sans-serif;
+      min-height:100vh;
+      background:linear-gradient(135deg,#1e3c72,#2a5298,#f4b400);
+      margin:0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:20px;
+    }
+    .box{
+      background:rgba(255,255,255,0.95);
+      padding:30px;
+      border-radius:20px;
+      max-width:400px;
+      width:100%;
+      box-shadow:0 20px 40px rgba(0,0,0,0.3);
+    }
+    h1{text-align:center;color:#1e3c72;margin-bottom:20px;}
+    input{
+      width:100%;padding:12px;margin-bottom:10px;border-radius:10px;
+      border:1px solid #ccc;
+    }
+    .role-select{margin-bottom:10px;}
+    button{
+      width:100%;padding:12px;border:none;border-radius:10px;
+      background:#f4b400;color:#1e3c72;font-weight:bold;cursor:pointer;
+    }
+    a{color:#1e3c72;font-weight:bold;}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Register</h1>
+    <input id="fullName" placeholder="Full Name">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <select id="role" class="role-select">
+      <option value="student">Student</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button onclick="register()">Create Account</button>
+    <p style="margin-top:10px;text-align:center;">Already have an account? <a href="/login">Login</a></p>
+  </div>
+  <script>
+    async function register() {
+      const fullName = document.getElementById('fullName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const role = document.getElementById('role').value;
+
+      if (!fullName || !email || !password) {
+        alert('Please fill all fields');
+        return;
+      }
+
+      const res = await fetch('/api/register', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ fullName, email, password, role })
+      });
+      const data = await res.json();
+      if (data.error) {
+        alert('❌ ' + data.error);
+        return;
+      }
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('userData', JSON.stringify({
+        name: data.name,
+        email: data.email,
+        role: data.role
+      }));
+      alert('✅ Registered successfully');
+      if (data.role === 'admin') {
+        window.location.href = '/admin-dashboard';
+      } else {
+        window.location.href = '/student-dashboard';
+      }
+    }
+  </script>
+</body>
+</html>

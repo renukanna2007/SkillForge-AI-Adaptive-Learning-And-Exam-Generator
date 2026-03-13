@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillForge - Profile</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #f4b400 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(45deg, #f4b400, #f9c800);
+            color: #1e3c72;
+            padding: 30px;
+            text-align: center;
+        }
+        .profile-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 40px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        .avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            color: white;
+        }
+        .profile-info h2 { color: #1e3c72; margin-bottom: 5px; }
+        .profile-info p { color: #666; font-size: 18px; }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+        .card {
+            background: #f8f9ff;
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 5px solid #f4b400;
+        }
+        .card h3 { color: #1e3c72; margin-bottom: 15px; font-size: 1.5em; }
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .course {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .course:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .content { grid-template-columns: 1fr; }
+            .profile-card { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🎓 SkillForge Dashboard</h1>
+            <p>Welcome back to your BTech CSE Learning journey!</p>
+        </div>
+        
+        <div class="profile-card">
+            <div class="avatar">👤</div>
+            <div class="profile-info">
+                <h2 id="userName">Renu Kanna</h2>
+                <p id="userRole">Admin • Joined March 2026</p>
+                <p>renukanna365@gmail.com</p>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="card">
+                <h3>📚 My Courses (4 Enrolled)</h3>
+                <div class="courses-grid">
+                    <div class="course" onclick="openCourse('DSA')">
+                        <h4>📊 Data Structures</h4>
+                        <p>75% Complete</p>
+                    </div>
+                    <div class="course" onclick="openCourse('OOPS')">
+                        <h4>🔧 Object Oriented Programming</h4>
+                        <p>60% Complete</p>
+                    </div>
+                    <div class="course" onclick="openCourse('DBMS')">
+                        <h4>🗄️ Database Management</h4>
+                        <p>40% Complete</p>
+                    </div>
+                    <div class="course" onclick="openCourse('OS')">
+                        <h4>⚙️ Operating Systems</h4>
+                        <p>20% Complete</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>📈 Progress Overview</h3>
+                <div style="font-size: 24px; margin: 20px 0;">
+                    <div>📊 Overall: <span style="color: #f4b400; font-weight: bold;">52%</span></div>
+                    <div>⭐ Rank: <span style="color: #1e3c72; font-weight: bold;">#3/45</span></div>
+                    <div>🎯 Next: Complete DSA Arrays</div>
+                </div>
+                <button class="login-btn" style="width: 100%; margin-top: 15px;" onclick="continueLearning()">
+                    🚀 Continue Learning
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set user data from login
+        const userData = JSON.parse(localStorage.getItem('userData') || '{"name": "Renu Kanna", "role": "Admin"}');
+        document.getElementById('userName').textContent = userData.name;
+        document.getElementById('userRole').textContent = `${userData.role} • Joined March 2026`;
+
+        function logout() {
+            localStorage.removeItem('userData');
+            window.location.href = '/index.html';
+        }
+        
+        function openCourse(course) {
+            alert(`Opening ${course} course!`);
+        }
+        
+        function continueLearning() {
+            alert('Continuing your learning journey!');
+        }
+    </script>
+</body>
+</html>

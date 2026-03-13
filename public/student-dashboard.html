@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillForge - Student Dashboard</title>
+  <style>
+    body{
+      font-family:'Segoe UI',sans-serif;
+      min-height:100vh;
+      margin:0;
+      padding:20px;
+      background:linear-gradient(135deg,#0f172a,#111827,#0f766e);
+      color:white;
+    }
+    .container{ max-width:1100px; margin:0 auto; }
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .logout-btn{
+      background:#f97316;
+      border:none;
+      padding:10px 20px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:bold;
+      color:white;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:16px;
+      margin-bottom:24px;
+    }
+    .card{
+      background:rgba(255,255,255,0.95);
+      color:#0f172a;
+      border-radius:18px;
+      padding:14px 16px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.2);
+      font-size:14px;
+      cursor:pointer;
+      text-align:center;
+      font-weight:600;
+      transition:0.2s;
+    }
+    .card:hover{ transform:translateY(-4px); }
+    #content{
+      background:white;
+      color:#0f172a;
+      border-radius:18px;
+      padding:20px;
+      min-height:220px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.2);
+      font-size:14px;
+    }
+    .item{
+      background:#f9fafb;
+      padding:10px;
+      margin-bottom:10px;
+      border-radius:10px;
+      border-left:4px solid #0f766e;
+      font-size:14px;
+    }
+    small{ color:#6b7280; }
+    textarea,input{
+      font-family:inherit;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>SkillForge Student Dashboard</h1>
+      <div>
+        <span id="welcome"></span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card" onclick="openSection('profile')">👤 Profile</div>
+      <div class="card" onclick="openSection('courses')">📚 Courses</div>
+      <div class="card" onclick="openSection('progress')">📈 Progress</div>
+      <div class="card" onclick="openSection('attendance')">📋 Attendance</div>
+      <div class="card" onclick="openSection('announcements')">📢 Announcements</div>
+      <div class="card" onclick="openSection('exams')">📝 Exams</div>
+      <div class="card" onclick="openSection('quizzes')">❓ Quizzes</div>
+      <div class="card" onclick="openSection('ai')">🤖 AI Tutor</div>
+      <div class="card" onclick="openSection('chat')">💬 Chat with Admin</div>
+    </div>
+
+    <div id="content">
+      <h2>Overview</h2>
+      <p>Select any card above to see details. Data is loaded from simple APIs like <code>/api/courses</code>.</p>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("sf_token");
+    const role  = localStorage.getItem("sf_role");
+    const name  = localStorage.getItem("sf_name") || "";
+    const email = localStorage.getItem("sf_email") || "";
+
+    if (!token || role !== "student") {
+      window.location.href = "/login";
+    }
+
+    document.getElementById("welcome").textContent =
+      `Hi, ${name || "Student"} (${role})`;
+
+    function logout() {
+      localStorage.removeItem("sf_token");
+      localStorage.removeItem("sf_role");
+      localStorage.removeItem("sf_name");
+      localStorage.removeItem("sf_email");
+      localStorage.removeItem("sf_profile");
+      window.location.href = "/";
+    }
+
+    async function openSection(section) {
+      const content = document.getElementById("content");
+
+      if (section === "profile") {
+        content.innerHTML = `
+          <h2>Profile</h2>
+          <div class="item"><strong>Name:</strong> ${name || "Student"}</div>
+          <div class="item"><strong>Email:</strong> ${email || "N/A"}</div>
+          <div class="item"><strong>Role:</strong> ${role}</div>
+          <p>You can extend this section to edit profile details later.</p>
+        `;
+        return;
+      }
+
+      if (section === "courses") {
+        content.innerHTML = "<h2>Courses</h2><p>Loading...</p>";
+        const res = await fetch("/api/courses", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        content.innerHTML = "<h2>Courses</h2>" +
+          data.map(c => `
+            <div class="item">
+              <strong>${c.title}</strong><br>
+              Level: ${c.level}
+            </div>
+          `).join("");
+        return;
+      }
+
+      if (section === "progress") {
+        content.innerHTML = "<h2>Progress</h2><p>Loading...</p>";
+        const res = await fetch("/api/progress", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        content.innerHTML = `
+          <h2>Progress</h2>
+          <div class="item"><strong>Completed courses:</strong> ${data.completedCourses}</div>
+          <div class="item"><strong>Active courses:</strong> ${data.activeCourses}</div>
+          <div class="item"><strong>Quizzes taken:</strong> ${data.quizzesTaken}</div>
+          <div class="item"><strong>Overall progress:</strong> ${data.overallPercent}%</div>
+        `;
+        return;
+      }
+
+      if (section === "attendance") {
+        content.innerHTML = "<h2>Attendance</h2><p>Loading...</p>";
+        const res = await fetch("/api/attendance", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        content.innerHTML = "<h2>Attendance</h2>" +
+          data.map(a => `
+            <div class="item">
+              <strong>${a.date}</strong> - ${a.status}
+            </div>
+          `).join("");
+        return;
+      }
+
+      if (section === "announcements") {
+        content.innerHTML = `
+          <h2>Announcements</h2>
+          <div id="annBox">Loading announcements...</div>
+        `;
+        loadAnnouncementsForStudent();
+        return;
+      }
+
+      if (section === "exams") {
+        content.innerHTML = "<h2>Exams</h2><p>Loading...</p>";
+        const res = await fetch("/api/exams", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        content.innerHTML = "<h2>Exams</h2>" +
+          data.map(ex => `
+            <div class="item">
+              <strong>${ex.name}</strong><br>
+              Course: ${ex.course}<br>
+              Date: ${ex.date}
+            </div>
+          `).join("");
+        return;
+      }
+
+      if (section === "quizzes") {
+        content.innerHTML = "<h2>Quizzes</h2><p>Loading...</p>";
+        const res = await fetch("/api/quizzes", {
+          headers: { "Authorization": "Bearer " + token }
+        });
+        const data = await res.json();
+        content.innerHTML = "<h2>Quizzes</h2>" +
+          data.map(q => `
+            <div class="item">
+              <strong>${q.name}</strong><br>
+              Score: ${q.score}
+            </div>
+          `).join("");
+        return;
+      }
+
+      if (section === "ai") {
+        content.innerHTML = `
+          <h2>AI Tutor</h2>
+          <p>Ask syllabus-related questions (Java, C, Python, DBMS, OS, DSA, CN, exam prep).</p>
+          <textarea id="ai_q" rows="3" style="width:100%;margin-bottom:8px;"></textarea>
+          <button onclick="askAiTutor()">Ask</button>
+          <div id="ai_ans" style="margin-top:10px;"></div>
+        `;
+        return;
+      }
+
+      if (section === "chat") {
+        content.innerHTML = `
+          <h2>Chat with Admin</h2>
+          <div id="chatBox" style="max-height:280px;overflow-y:auto;margin-bottom:10px;"></div>
+          <textarea id="chatInput" rows="2" style="width:100%;margin-bottom:8px;"></textarea>
+          <button onclick="sendStudentMessage()">Send</button>
+        `;
+        loadStudentMessages();
+        return;
+      }
+
+      content.innerHTML = `
+        <h2>Overview</h2>
+        <p>Select any card above to see details. Data is loaded from simple APIs like <code>/api/courses</code>.</p>
+      `;
+    }
+
+    // Announcements (with timestamp)
+    async function loadAnnouncementsForStudent() {
+      const res = await fetch("/api/announcements", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const data = await res.json();
+      const box = document.getElementById("annBox");
+      if (!Array.isArray(data) || data.length === 0) {
+        box.innerHTML = "<p>No announcements yet.</p>";
+        return;
+      }
+      box.innerHTML = data
+        .map(a => {
+          const d = a.createdAt ? new Date(a.createdAt) : null;
+          const when = d ? d.toLocaleString() : "Unknown time";
+          return `
+            <div class="item">
+              <strong>${a.title}</strong><br>
+              <small>Announced on: ${when}</small><br>
+              ${a.text}
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    async function askAiTutor() {
+      const q = document.getElementById("ai_q").value.trim();
+      if (!q) return;
+      const res = await fetch("/api/ai-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ message: q })
+      });
+      const data = await res.json();
+      document.getElementById("ai_ans").innerText = data.reply || "No answer.";
+    }
+
+    async function loadStudentMessages() {
+      const res = await fetch("/api/messages", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const data = await res.json();
+      const box = document.getElementById("chatBox");
+      const myEmail = email;
+      box.innerHTML = data
+        .filter(m => m.from === myEmail || m.to === myEmail)
+        .map(m => `
+          <div class="item">
+            <strong>${m.from === myEmail ? "You" : (m.fromName || m.from)}:</strong>
+            ${m.text}
+          </div>
+        `)
+        .join("");
+    }
+
+    async function sendStudentMessage() {
+      const t = document.getElementById("chatInput").value.trim();
+      if (!t) return;
+      await fetch("/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+          from: email,
+          fromName: name || "Student",
+          to: "admin",
+          text: t
+        })
+      });
+      document.getElementById("chatInput").value = "";
+      loadStudentMessages();
+    }
+  </script>
+</body>
+</html>
