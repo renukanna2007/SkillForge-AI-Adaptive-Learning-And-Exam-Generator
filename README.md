@@ -1,5 +1,9 @@
 # SkillForge-AI-Adaptive-Learning-And-Exam-Generator
-SkillForge is an AI-powered EdTech platform designed to help students and administrators manage learning activities through a centralized web application.  It provides tools for course management, announcements, attendance tracking, and AI-assisted learning support.
+
+Full‑stack SkillForge – AI-powered adaptive learning and exam generator platform for B.Tech students, with separate Student and Admin dashboards, AI exam generation, and an integrated AI Tutor.<file:2707>
+
+SkillForge is an AI-powered EdTech platform designed to help students and administrators manage learning activities through a centralized web application. It provides tools for course management, announcements, attendance tracking, and AI-assisted learning support.<file:2707>
+
 ## Features
 
 - **Student portal**
@@ -14,20 +18,20 @@ SkillForge is an AI-powered EdTech platform designed to help students and admini
   - Manage question banks and exam configurations.
 
 - **AI exam generation**
-  - Uses LM Studio running a local model.
-  - Prompts are structured so the model returns strict JSON, which the backend validates and stores.
+  - Uses LM Studio running a local model.<file:2707>
+  - Prompts are structured so the model returns strict JSON, which the backend validates and stores.<file:2707>
   - Supports configurable difficulty, topic, number of questions, and marks.
 
 - **AI Tutor**
-  - `/api/ai-tutor/chat` endpoint connects to the local LLM via the OpenAI-compatible `/v1/chat/completions` API.
+  - `/api/ai-tutor/chat` endpoint connects to the local LLM via the OpenAI-compatible `/v1/chat/completions` API.<file:2707>[web:2732]
   - Chat-style interface where students can ask course-related questions.
   - Short, focused explanations targeted at B.Tech level students.
 
 - **Architecture & tech stack**
   - **Backend:** Node.js, Express.
-  - **Database:** (Your DB here – e.g., MySQL / PostgreSQL) with tables for users, courses, exams, questions, and results.
-  - **AI backend:** LM Studio local LLM server with OpenAI-compatible endpoints.
-  - **Auth:** Token-based auth middleware for protected routes.
+  - **Database:** Relational DB (e.g., MySQL) with tables for users, courses, exams, questions, and results.<file:2707>
+  - **AI backend:** LM Studio local LLM server with OpenAI-compatible endpoints.<file:2707>[web:2732]
+  - **Auth:** Token-based auth middleware plus Google and GitHub OAuth login.
   - **Frontend:** HTML/CSS/JS dashboard-style UI (student and admin views).
 
 ---
@@ -35,13 +39,11 @@ SkillForge is an AI-powered EdTech platform designed to help students and admini
 ## Project structure (high level)
 
 - `server.js` – Express app entry point, route registration, middleware.
-- `routes/` – API routes for auth, students, admins, exams, AI tutor, and AI exam generator.
+- `routes/` – API routes for auth, students, admins, exams, AI tutor, and AI exam generator.<file:2707>
 - `public/` – Static assets (HTML, CSS, JS) for dashboards and exam/tutor UI.
 - `config/` – Environment and database configuration.
 - `sql/` or `migrations/` – Database schema and seed data (users, courses, exams, etc.).
-- `logs/` – Optional: application and LLM logs (for debugging exam JSON, tutor responses).  
-
-(Names may differ; update according to your actual structure.)
+- `logs/` – Optional: application and LLM logs (for debugging exam JSON, tutor responses).<file:2707>
 
 ---
 
@@ -49,7 +51,6 @@ SkillForge is an AI-powered EdTech platform designed to help students and admini
 
 ### Prerequisites
 
-- Node.js (LTS)
-- npm or yarn
+- Node.js (LTS) and npm or yarn.
 - Local database (e.g., MySQL) with a configured user and database.
-- [LM Studio](https://lmstudio.ai/) installed and a compatible chat model downloaded (e.g., `tinyllama-1.1b-chat-v1.0`).
+- [LM Studio](https://lmstudio.ai/) installed and a compatible chat model downloaded (for example, `tinyllama-1.1b-chat-v1.0`).<file:2707>[web:2731]
