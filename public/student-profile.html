@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillForge - Student Profile</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #f4b400 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(45deg, #f4b400, #f9c800);
+      color: #1e3c72;
+      padding: 24px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .header p {
+      font-size: 14px;
+      color: #374151;
+    }
+    .back-link {
+      display: inline-block;
+      margin: 12px 40px 0;
+      color: #1e3c72;
+      font-weight: 500;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 30px 40px;
+      border-bottom: 1px solid #e1e5e9;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, #1e3c72, #2a5298);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5em;
+      color: white;
+      overflow: hidden;
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .profile-info h2 { color: #1e3c72; margin-bottom: 6px; }
+    .profile-info p { color: #4b5563; font-size: 14px; margin-bottom: 4px; }
+    .tagline { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 30px;
+      padding: 30px 40px 40px;
+    }
+    .card {
+      background: #f8f9ff;
+      padding: 24px 24px 22px;
+      border-radius: 15px;
+      border-left: 5px solid #f4b400;
+      font-size: 14px;
+    }
+    .card h3 {
+      color: #1e3c72;
+      margin-bottom: 12px;
+      font-size: 1.2em;
+    }
+    .info-row {
+      margin-bottom: 6px;
+    }
+    .info-label {
+      font-weight: 600;
+      color: #374151;
+    }
+    .info-value {
+      color: #4b5563;
+      margin-left: 4px;
+    }
+
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .course {
+      background:Both pages already display `user.photo` if present; they just lack a control to set it. Below are **full updated codes** for student and admin profile pages with:
+
+- Existing behavior kept.
+- New “Reset Profile” button (clears inputs).
+- New simple “Profile Photo URL” input + Save button to update `photo` using the existing `/api/profile` PUT endpoint.
+
+---
+
+## 1) Student profile – full updated code
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillForge - Student Profile</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #f4b400 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(45deg, #f4b400, #f9c800);
+      color: #1e3c72;
+      padding: 24px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .header p {
+      font-size: 14px;
+      color: #374151;
+    }
+    .back-link {
+      display: inline-block;
+      margin: 12px 40px 0;
+      color: #1e3c72;
+      font-weight: 500;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 30px 40px;
+      border-bottom: 1px solid #e1e5e9;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, #1e3c72, #2a5298);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5em;
+      color: white;
+      overflow: hidden;
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .profile-info h2 { color: #1e3c72; margin-bottom: 6px; }
+    .profile-info p { color: #4b5563; font-size: 14px; margin-bottom: 4px; }
+    .tagline { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 30px;
+      padding: 30px 40px 40px;
+    }
+    .card {
+      background: #f8f9ff;
+      padding: 24px 24px 22px;
+      border-radius: 15px;
+      border-left: 5px solid #f4b400;
+      font-size: 14px;
+    }
+    .card h3 {
+      color: #1e3c72;
+      margin-bottom: 12px;
+      font-size: 1.2em;
+    }
+    .info-row {
+      margin-bottom: 6px;
+    }
+    .info-label {
+      font-weight: 600;
+      color: #374151;
+    }
+    .info-value {
+      color: #4b5563;
+      margin-left: 4px;
+    }
+
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .course {
+      background: white;
+      padding: 14px 12px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+    .course h4 {
+      margin-bottom: 4px;
+      color: #111827;
+      font-size: 14px;
+    }
+    .course p {
+      color: #6b7280;
+      font-size: 12px;
+    }
+    .course:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.16);
+    }
+
+    .logout-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .profile-input {
+      margin-left: 4px;
+      padding: 2px 4px;
+      width: 60%;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      color: #111827;
+    }
+    .profile-textarea {
+      margin-left: 4px;
+      padding: 4px 6px;
+      width: 90%;
+      min-height: 60px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      color: #111827;
+      resize: vertical;
+    }
+    .save-btn {
+      background: #1e3c72;
+      color: #ffffff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .content { grid-template-columns: 1fr; padding: 24px 20px 30px; }
+      .profile-card { flex-direction: column; text-align: center; padding: 24px 20px; }
+      .back-link { margin-left: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="header">
+      <h1>Student Profile</h1>
+      <p id="headerLine">View and manage your SkillForge details.</p>
+    </div>
+
+    <a href="/student-dashboard" class="back-link">← Back to dashboard</a>
+
+    <div class="profile-card">
+      <div class="avatar" id="avatarContainer">
+        <span id="avatarInitial">S</span>
+      </div>
+      <div class="profile-info">
+        <h2 id="userName">Loading...</h2>
+        <p id="userEmail">email@example.com</p>
+        <p id="userRole">Student</p>
+        <p class="tagline" id="userTagline"></p>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="card">
+        <h3>👤 Essential Information</h3>
+
+        <!-- Existing read-only display -->
+        <div class="info-row"><span class="info-label">Department:</span><span class="info-value" id="infoDept">–</span></div>
+        <div class="info-row"><span class="info-label">Year of Study:</span><span class="info-value" id="infoYear">–</span></div>
+        <div class="info-row"><span class="info-label">Roll Number:</span><span class="info-value" id="infoRoll">–</span></div>
+        <div class="info-row"><span class="info-label">Phone:</span><span class="info-value" id="infoPhone">–</span></div>
+        <div class="info-row"><span class="info-label">Address:</span><span class="info-value" id="infoAddress">–</span></div>
+        <div class="info-row"><span class="info-label">Bio:</span><span class="info-value" id="infoBio">–</span></div>
+
+        <hr style="margin: 12px 0 10px; border: none; border-top: 1px dashed #d1d5db;">
+        <p style="font-size:12px;color:#6b7280;margin-bottom:6px;">Update your details and click Save.</p>
+
+        <!-- Existing + new editable form -->
+        <form id="profileForm" onsubmit="return saveProfile(event)">
+          <div class="info-row">
+            <span class="info-label">Department:</span>
+            <input id="deptInput" name="department" class="profile-input" />
+          </div>
+          <div class="info-row">
+            <span class="info-label">Year of Study:</span>
+            <input id="yearInput" name="year" class="profile-input" />
+          </div>
+          <div class="info-row">
+            <span class="info-label">Roll Number:</span>
+            <input id="rollInput" name="roll_number" class="profile-input" />
+          </div>
+          <div class="info-row">
+            <span class="info-label">Phone:</span>
+            <input id="phoneInput" name="phone" class="profile-input" />
+          </div>
+          <div class="info-row">
+            <span class="info-label">Address:</span>
+            <input id="addressInput" name="address" class="profile-input" />
+          </div>
+          <div class="info-row" style="margin-top:6px;">
+            <span class="info-label">Bio:</span>
+            <textarea id="bioInput" name="bio" class="profile-textarea"></textarea>
+          </div>
+
+          <!-- New: photo URL field -->
+          <div class="info-row" style="margin-top:8px;">
+            <span class="info-label">Photo URL:</span>
+            <input id="photoInput" name="photo" class="profile-input" />
+          </div>
+
+          <button type="submit" class="save-btn">Save Profile</button>
+          <button type="button" class="save-btn" style="background:#6b7280;margin-left:8px;" onclick="resetStudentProfileForm()">
+            Reset Profile
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>📚 My Courses</h3>
+        <div class="courses-grid" id="coursesGrid">
+          <p>Loading courses...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+
+    function logout() {
+      fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+      localStorage.removeItem('sf_token');
+      localStorage.removeItem('sf_role');
+      localStorage.removeItem('sf_name');
+      localStorage.removeItem('sf_email');
+      window.location.href = '/login.html';
+    }
+
+    function openCourse(title) {
+      alert('Opening ' + title + ' course!');
+    }
+
+    async function loadProfile() {
+      const token = localStorage.getItem('sf_token') || '';
+      try {
+        const res = await fetch(API_BASE + '/api/profile', {
+          headers: { 'Authorization': 'Bearer ' + token },
+          credentials: 'include'
+        });
+        if (!res.ok) return;
+
+        const user = await res.json();
+        const name = user.full_name || localStorage.getItem('sf_name') || 'Student';
+        const email = user.email || localStorage.getItem('sf_email') || '';
+        const role = user.role || 'student';
+
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userEmail').textContent = email || 'No email';
+        document.getElementById('userRole').textContent = 'Student';
+        document.getElementById('headerLine').textContent = 'Student can update year, photo, and essential info here.';
+
+        // Read-only display
+        document.getElementById('infoDept').textContent = user.department || 'Not set';
+        document.getElementById('infoYear').textContent = user.year || 'Not set';
+        document.getElementById('infoRoll').textContent = user.roll_number || 'Not set';
+        document.getElementById('infoPhone').textContent = user.phone || 'Not set';
+        document.getElementById('infoAddress').textContent = user.address || 'Not set';
+        document.getElementById('infoBio').textContent = user.bio || 'No bio added yet.';
+
+        // Prefill inputs
+        document.getElementById('deptInput').value = user.department || '';
+        document.getElementById('yearInput').value = user.year || '';
+        document.getElementById('rollInput').value = user.roll_number || '';
+        document.getElementById('phoneInput').value = user.phone || '';
+        document.getElementById('addressInput').value = user.address || '';
+        document.getElementById('bioInput').value = user.bio || '';
+        document.getElementById('photoInput').value = user.photo || '';
+
+        // Avatar (photo or initial)
+        const avatarContainer = document.getElementById('avatarContainer');
+        const avatarInitial = document.getElementById('avatarInitial');
+        if (user.photo) {
+          const img = document.createElement('img');
+          img.src = user.photo;
+          avatarContainer.innerHTML = '';
+          avatarContainer.appendChild(img);
+        } else {
+          avatarInitial.textContent = (name || 'S').charAt(0).toUpperCase();
+        }
+
+        // Tagline
+        const tagline = [];
+        if (user.department) tagline.push(user.department);
+        if (user.year) tagline.push('Year ' + user.year);
+        document.getElementById('userTagline').textContent =
+          tagline.length ? tagline.join(' -  ') : 'Update your academic details in SkillForge.';
+      } catch (e) {
+        console.error('profile load error', e);
+      }
+    }
+
+    async function saveProfile(event) {
+      event.preventDefault();
+      const token = localStorage.getItem('sf_token') || '';
+
+      const body = {
+        department: document.getElementById('deptInput').value || null,
+        year: document.getElementById('yearInput').value || null,
+        roll_number: document.getElementById('rollInput').value || null,
+        phone: document.getElementById('phoneInput').value || null,
+        address: document.getElementById('addressInput').value || null,
+        bio: document.getElementById('bioInput').value || null,
+        photo: document.getElementById('photoInput').value || null,
+      };
+
+      try {
+        const res = await fetch(API_BASE + '/api/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          alert('Failed to save profile');
+          return false;
+        }
+        const updated = await res.json();
+
+        // Update display
+        document.getElementById('infoDept').textContent = updated.department || 'Not set';
+        document.getElementById('infoYear').textContent = updated.year || 'Not set';
+        document.getElementById('infoRoll').textContent = updated.roll_number || 'Not set';
+        document.getElementById('infoPhone').textContent = updated.phone || 'Not set';
+        document.getElementById('infoAddress').textContent = updated.address || 'Not set';
+        document.getElementById('infoBio').textContent = updated.bio || 'No bio added yet.';
+        document.getElementById('photoInput').value = updated.photo || '';
+
+        // Update avatar preview
+        const avatarContainer = document.getElementById('avatarContainer');
+        const avatarInitial = document.getElementById('avatarInitial');
+        if (updated.photo) {
+          const img = document.createElement('img');
+          img.src = updated.photo;
+          avatarContainer.innerHTML = '';
+          avatarContainer.appendChild(img);
+        } else {
+          const name = updated.full_name || localStorage.getItem('sf_name') || 'Student';
+          avatarContainer.innerHTML = '';
+          const span = document.createElement('span');
+          span.id = 'avatarInitial';
+          span.textContent = (name || 'S').charAt(0).toUpperCase();
+          avatarContainer.appendChild(span);
+        }
+
+        alert('Profile saved');
+      } catch (e) {
+        console.error('save profile error', e);
+        alert('Error saving profile');
+      }
+      return false;
+    }
+
+    function resetStudentProfileForm() {
+      document.getElementById('deptInput').value = '';
+      document.getElementById('yearInput').value = '';
+      document.getElementById('rollInput').value = '';
+      document.getElementById('phoneInput').value = '';
+      document.getElementById('addressInput').value = '';
+      document.getElementById('bioInput').value = '';
+      document.getElementById('photoInput').value = '';
+    }
+
+    async function loadCourses() {
+      const token = localStorage.getItem('sf_token') || '';
+      const headers = { 'Authorization': 'Bearer ' + token };
+      const grid = document.getElementById('coursesGrid');
+
+      try {
+        const res = await fetch(API_BASE + '/api/courses', {
+          headers,
+          credentials: 'include'
+        });
+        if (!res.ok) {
+          grid.innerHTML = '<p>Failed to load courses.</p>';
+          return;
+        }
+        const courses = await res.json();
+        grid.innerHTML = '';
+        if (!courses.length) {
+          grid.innerHTML = '<p>No courses available.</p>';
+        } else {
+          courses.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'course';
+            div.onclick = () => openCourse(c.title || ('Course #' + c.id));
+            const title = c.title || ('Course #' + c.id);
+            const sem = c.semester ? 'Semester ' + c.semester : 'Course in SkillForge';
+            div.innerHTML = `
+              <h4>${title}</h4>
+              <p>${sem}</p>
+            `;
+            grid.appendChild(div);
+          });
+        }
+      } catch (e) {
+        console.error('courses in profile error', e);
+        grid.innerHTML = '<p>Error loading courses.</p>';
+      }
+    }
+
+    loadProfile();
+    loadCourses();
+  </script>
+</body>
+</html>

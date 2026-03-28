@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SkillForge • Admin Messages</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1f2937;
+      background: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .left-head {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .left-head h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .left-head small {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .top-right button {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: transparent;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 1000px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .back-link {
+      font-size: 12px;
+      color: #60a5fa;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .section-sub {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 12px;
+      min-height: 320px;
+    }
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .threads {
+      border-right: 1px solid #111827;
+    }
+    .threads-header,
+    .detail-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #111827;
+      font-size: 12px;
+      color: #9ca3af;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .threads-list {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .thread-item {
+      padding: 8px 10px;
+      border-bottom: 1px solid #020617;
+      cursor: pointer;
+    }
+    .thread-item.active {
+      background: #02041a;
+      border-left: 2px solid #6366f1;
+      padding-left: 8px;
+    }
+    .thread-name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .thread-email {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .thread-meta {
+      font-size: 10px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .detail-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .msg {
+      margin-bottom: 10px;
+      max-width: 80%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #111827;
+      background: #020617;
+    }
+    .msg.me {
+      margin-left: auto;
+      background: #1d283a;
+      border-color: #1d4ed8;
+    }
+    .msg .meta {
+      font-size: 10px;
+      color: #9ca3af;
+      margin-bottom: 2px;
+    }
+    .msg .text {
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+
+    .chat-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 1px solid #111827;
+      padding: 8px 10px;
+      background: #020617;
+    }
+    .chat-input-row input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 13px;
+      outline: none;
+    }
+    .chat-input-row button {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: #e5e7eb;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .chat-input-row button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .small-note {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="left-head">
+    <h1>Admin Messages</h1>
+    <small id="adminMeta">Loading admin info…</small>
+  </div>
+  <div class="top-right">
+    <button id="logoutBtn">Logout</button>
+  </div>
+</header>
+
+<main>
+  <a class="back-link" href="/admin-dashboard">
+    ← Back to admin dashboard
+  </a>
+
+  <h2 class="section-title">Student conversations</h2>
+  <p class="section-sub">View and reply to messages from students.</p>
+
+  <div class="layout">
+    <div class="panel threads">
+      <div class="threads-header">
+        <span>Students</span>
+      </div>
+      <div id="threadsList" class="threads-list"></div>
+    </div>
+
+    <div class="panel">
+      <div class="detail-header">
+        <span id="detailTitle">No student selected</span>
+      </div>
+      <div class="detail-body">
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input-row">
+          <input id="msgInput" type="text" placeholder="Type a reply to this student..." />
+          <button id="sendBtn" disabled>Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="small-note">
+    Messages are loaded from /api/messages. Only admins can see all conversations.
+  </p>
+</main>
+
+<script>
+  const API_BASE = '';
+
+  function getStoredAdmin() {
+    const name = localStorage.getItem('sf_name') || '';
+    const email = localStorage.getItem('sf_email') || '';
+    const role = localStorage.getItem('sf_role') || '';
+    return { name, email, role };
+  }
+
+  function applyAdminInfo() {
+    const { name, email } = getStoredAdmin();
+    const metaEl = document.getElementById('adminMeta');
+
+    if (name) {
+      metaEl.textContent = 'Signed in as ' + name + ' (admin)';
+    } else if (email) {
+      metaEl.textContent = 'Signed in as ' + email + ' (admin)';
+    } else {
+      metaEl.textContent = 'Signed in as admin';
+    }
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) {}
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_role');
+    localStorage.removeItem('sf_name');
+    localStorage.removeItem('sf_email');
+    window.location.href = '/login.html';
+  });
+
+  function formatDateTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString();
+  }
+
+  let allMessages = [];
+  let currentStudentEmail = null;
+
+  function buildThreads() {
+    const container = document.getElementById('threadsList');
+    container.innerHTML = '';
+
+    const map = new Map();
+    allMessages.forEach(m => {
+      const otherEmail = m.from_email || m.to_email;
+      if (!otherEmail) return;
+      if (!map.has(otherEmail)) {
+        map.set(otherEmail, []);
+      }
+      map.get(otherEmail).push(m);
+    });
+
+    const threads = Array.from(map.entries()).map(([email, msgs]) => {
+      const last = msgs.reduce((a, b) => {
+        return new Date(a.created_at || 0) > new Date(b.created_at || 0) ? a : b;
+      });
+      return {
+        email,
+        messages: msgs,
+        lastCreatedAt: last.created_at
+      };
+    });
+
+    threads.sort((a, b) => new Date(b.lastCreatedAt || 0) - new Date(a.lastCreatedAt || 0));
+
+    threads.forEach(thread => {
+      const item = document.createElement('div');
+      item.className = 'thread-item' + (thread.email === currentStudentEmail ? ' active' : '');
+      item.dataset.email = thread.email;
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'thread-name';
+      nameDiv.textContent = thread.email;
+
+      const emailDiv = document.createElement('div');
+      emailDiv.className = 'thread-email';
+      emailDiv.textContent = thread.messages[0].from_name || thread.email;
+
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'thread-meta';
+      metaDiv.textContent = formatDateTime(thread.lastCreatedAt);
+
+      item.appendChild(nameDiv);
+      item.appendChild(emailDiv);
+      item.appendChild(metaDiv);
+
+      item.addEventListener('click', () => {
+        currentStudentEmail = thread.email;
+        document.querySelectorAll('.thread-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        renderConversation();
+      });
+
+      container.appendChild(item);
+    });
+
+    if (!currentStudentEmail && threads.length) {
+      currentStudentEmail = threads[0].email;
+      renderConversation();
+      const first = container.querySelector('.thread-item');
+      if (first) first.classList.add('active');
+    }
+  }
+
+  function renderConversation() {
+    const title = document.getElementById('detailTitle');
+    const box = document.getElementById('chatMessages');
+    const btn = document.getElementById('sendBtn');
+
+    box.innerHTML = '';
+
+    if (!currentStudentEmail) {
+      title.textContent = 'No student selected';
+      btn.disabled = true;
+      return;
+    }
+
+    title.textContent = 'Conversation with ' + currentStudentEmail;
+    btn.disabled = false;
+
+    const msgs = allMessages.filter(m =>
+      m.from_email === currentStudentEmail || m.to_email === currentStudentEmail
+    );
+
+    const admin = getStoredAdmin();
+    const adminEmail = admin.email;
+
+    msgs.forEach(m => {
+      const isMe = adminEmail && m.from_email === adminEmail;
+      const msgEl = document.createElement('div');
+      msgEl.className = 'msg' + (isMe ? ' me' : '');
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const who = isMe ? 'You' : (m.from_name || m.from_email || 'Student');
+      meta.textContent = who + ' • ' + formatDateTime(m.created_at);
+
+      const text = document.createElement('div');
+      text.className = 'text';
+      text.textContent = m.text || '';
+
+      msgEl.appendChild(meta);
+      msgEl.appendChild(text);
+      box.appendChild(msgEl);
+    });
+
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function loadMessages() {
+    const token = localStorage.getItem('sf_token') || '';
+    const headers = { 'Authorization': 'Bearer ' + token };
+
+    try {
+      const res = await fetch(API_BASE + '/api/messages', {
+        headers,
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        console.error('Failed to load messages');
+        return;
+      }
+      allMessages = await res.json();
+      console.log('ADMIN MESSAGES PAGE DATA', allMessages);
+      buildThreads();
+    } catch (e) {
+      console.error('admin messages page error', e);
+    }
+  }
+
+  async function sendMessage() {
+    if (!currentStudentEmail) return;
+
+    const input = document.getElementById('msgInput');
+    const btn = document.getElementById('sendBtn');
+    const text = (input.value || '').trim();
+    if (!text) return;
+
+    btn.disabled = true;
+
+    const token = localStorage.getItem('sf_token') || '';
+    const headers = {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    };
+
+    try {
+      const res = await fetch(API_BASE + '/api/messages', {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          to_email: currentStudentEmail,
+          text
+        })
+      });
+
+      if (!res.ok) {
+        alert('Failed to send message');
+      } else {
+        input.value = '';
+        await loadMessages();
+      }
+    } catch (e) {
+      console.error('send admin message error', e);
+      alert('Failed to send message: ' + (e.message || e));
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('msgInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  applyAdminInfo();
+  loadMessages();
+</script>
+</body>
+</html>

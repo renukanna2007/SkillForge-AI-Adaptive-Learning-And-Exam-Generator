@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin DB Monitor – SkillForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1f2937;
+      background: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    a.back-link:hover { text-decoration: underline; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .card {
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      padding: 12px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .card-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .card-value {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .card-foot {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .status-ok { color: #22c55e; }
+    .status-warn { color: #facc15; }
+    .status-bad { color: #f97373; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Admin DB Monitor</h1>
+  <button id="logoutBtn" style="padding:4px 10px;border-radius:999px;border:1px solid #4b5563;background:transparent;color:#e5e7eb;cursor:pointer;">
+    Logout
+  </button>
+</header>
+
+<main>
+  <a href="/admin-dashboard" class="back-link">← Back to admin dashboard</a>
+
+  <p style="font-size:13px;color:#9ca3af;margin-bottom:10px;">
+    Live snapshot of SkillForge data: users, courses, enrollments, attendance, and exam results.
+  </p>
+
+  <div id="statusText" style="font-size:13px;margin-bottom:8px;"></div>
+
+  <div id="cards" class="grid">
+    <div>Loading...</div>
+  </div>
+</main>
+
+<script>
+  const API_BASE = '';
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await fetch(API_BASE + '/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {}
+    localStorage.clear();
+    window.location.href = '/login.html';
+  });
+
+  function formatDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString();
+  }
+
+  async function loadDbMonitor() {
+    const token = localStorage.getItem('sf_token') || '';
+    const cards = document.getElementById('cards');
+    const statusText = document.getElementById('statusText');
+
+    cards.innerHTML = '<div>Loading...</div>';
+    statusText.textContent = '';
+
+    try {
+      const res = await fetch(API_BASE + '/api/admin/db-monitor', {
+        headers: { Authorization: 'Bearer ' + token },
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('db monitor error', res.status, text);
+        cards.innerHTML = '<div>Failed to load DB status.</div>';
+        statusText.innerHTML = '<span class="status-bad">API error ' + res.status + '</span>';
+        return;
+      }
+
+      const data = await res.json();
+      const { users, courses, enrollments, attendance, exams } = data;
+
+      let healthClass = 'status-ok';
+      let healthMsg = 'DB looks healthy.';
+
+      if (!users || !courses || !enrollments) {
+        healthClass = 'status-bad';
+        healthMsg = 'Core tables missing or empty result.';
+      } else if ((users.total_students || 0) === 0 || (courses.total_courses || 0) === 0) {
+        healthClass = 'status-warn';
+        healthMsg = 'Low data: no students or courses.';
+      }
+
+      statusText.innerHTML = `<span class="${healthClass}">${healthMsg}</span>`;
+
+      const cardsHtml = [];
+
+      if (users) {
+        cardsHtml.push(`
+          <div class="card" onclick="window.location.href='/admin-students.html'">
+            <div class="card-title">Users</div>
+            <div class="card-value">${users.total_users}</div>
+            <div class="card-foot">
+              Students: ${users.total_students || 0} · Admins: ${users.total_admins || 0}
+            </div>
+          </div>
+        `);
+      }
+
+      if (courses) {
+        cardsHtml.push(`
+          <div class="card" onclick="window.location.href='/admin-courses.html'">
+            <div class="card-title">Courses</div>
+            <div class="card-value">${courses.total_courses}</div>
+            <div class="card-foot">
+              Published: ${courses.published_courses || 0}
+            </div>
+          </div>
+        `);
+      }
+
+      if (enrollments) {
+        cardsHtml.push(`
+          <div class="card" onclick="window.location.href='/admin-enrollments'">
+            <div class="card-title">Enrollments</div>
+            <div class="card-value">${enrollments.total_enrollments}</div>
+            <div class="card-foot">
+              Last enrollment: ${formatDate(enrollments.last_enrollment_at)}
+            </div>
+          </div>
+        `);
+      }
+
+      if (attendance) {
+        cardsHtml.push(`
+          <div class="card" onclick="window.location.href='/admin-attendance.html'">
+            <div class="card-title">Attendance</div>
+            <div class="card-value">${attendance.total_attendance}</div>
+            <div class="card-foot">
+              Last attendance date: ${formatDate(attendance.last_attendance_date)}
+            </div>
+          </div>
+        `);
+      }
+
+      if (exams) {
+        cardsHtml.push(`
+          <div class="card" onclick="window.location.href='/admin-progress.html'">
+            <div class="card-title">Exam Results</div>
+            <div class="card-value">${exams.total_exam_results}</div>
+            <div class="card-foot">
+              Last exam result: ${formatDate(exams.last_exam_result_at)}
+            </div>
+          </div>
+        `);
+      }
+
+      cards.innerHTML = cardsHtml.join('');
+    } catch (e) {
+      console.error('db monitor load error', e);
+      cards.innerHTML = '<div>Error loading DB status.</div>';
+      statusText.innerHTML = '<span class="status-bad">Client error – see console.</span>';
+    }
+  }
+
+  loadDbMonitor();
+</script>
+</body>
+</html>

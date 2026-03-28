@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Announcements - SkillForge</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 24px 28px;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.15);
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      color: #111827;
+    }
+    .subtitle {
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #111827;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .form-card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 16px 18px 18px;
+      margin-bottom: 20px;
+      border-left: 4px solid #f97316;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 70px;
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      resize: vertical;
+    }
+    .inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #374151;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #f97316;
+      color: #111827;
+    }
+    .btn-primary:hover {
+      background: #ea580c;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+      margin-left: 8px;
+    }
+
+    .list-card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 14px 16px 16px;
+      border-left: 4px solid #0ea5e9;
+    }
+    .announcement {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 8px;
+    }
+    .announcement-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 2px;
+    }
+    .announcement-meta {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .announcement-content {
+      font-size: 13px;
+      color: #374151;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/admin-dashboard" class="back-link">← Back to admin dashboard</a>
+
+    <h1>Admin Announcements</h1>
+    <p class="subtitle">Create announcements that will be visible on all student dashboards.</p>
+
+    <div class="form-card">
+      <form id="announcementForm" onsubmit="return createAnnouncement(event)">
+        <div class="form-group">
+          <label for="titleInput">Title</label>
+          <input type="text" id="titleInput" required placeholder="e.g. Mid-Sem Exams Schedule">
+        </div>
+        <div class="form-group">
+          <label for="contentInput">Content</label>
+          <textarea id="contentInput" required placeholder="Enter announcement details here..."></textarea>
+        </div>
+        <div class="form-group inline">
+          <input type="checkbox" id="globalInput" checked>
+          <label for="globalInput" style="margin:0;">Global announcement (visible to all students)</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Post Announcement</button>
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+      </form>
+    </div>
+
+    <div class="list-card">
+      <h2 style="font-size:15px; margin:0 0 8px; color:#111827;">Existing Announcements</h2>
+      <div id="announcementsList">
+        <p style="font-size:13px;color:#6b7280;">Loading announcements...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+
+    function getToken() {
+      return localStorage.getItem('sf_token') || '';
+    }
+
+    function resetForm() {
+      document.getElementById('titleInput').value = '';
+      document.getElementById('contentInput').value = '';
+      document.getElementById('globalInput').checked = true;
+    }
+
+    async function createAnnouncement(event) {
+      event.preventDefault();
+      const token = getToken();
+
+      const body = {
+        title: document.getElementById('titleInput').value.trim(),
+        content: document.getElementById('contentInput').value.trim(),
+        is_global: document.getElementById('globalInput').checked,
+      };
+      if (!body.title || !body.content) {
+        alert('Title and content are required');
+        return false;
+      }
+
+      try {
+        const res = await fetch(API_BASE + '/api/announcements', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          alert('Failed to create announcement');
+          return false;
+        }
+        resetForm();
+        await loadAnnouncements(); // refresh list
+        alert('Announcement posted');
+      } catch (e) {
+        console.error('create announcement error', e);
+        alert('Error creating announcement');
+      }
+      return false;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleString();
+    }
+
+    async function loadAnnouncements() {
+      const token = getToken();
+      const container = document.getElementById('announcementsList');
+
+      try {
+        const res = await fetch(API_BASE + '/api/announcements', {
+          headers: { 'Authorization': 'Bearer ' + token },
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          container.innerHTML = '<p style="font-size:13px;color:#b91c1c;">Failed to load announcements.</p>';
+          return;
+        }
+        const data = await res.json();
+        if (!data.length) {
+          container.innerHTML = '<p style="font-size:13px;color:#6b7280;">No announcements yet.</p>';
+          return;
+        }
+
+        container.innerHTML = '';
+        data.forEach(a => {
+          const div = document.createElement('div');
+          div.className = 'announcement';
+          const when = formatDate(a.created_at);
+          const scope = a.is_global ? 'Global' : 'Course-specific';
+          div.innerHTML = `
+            <div class="announcement-title">${a.title || 'Untitled'}</div>
+            <div class="announcement-meta">${scope}${when ? ' · ' + when : ''}</div>
+            <div class="announcement-content">${(a.content || '').replace(/\n/g, '<br>')}</div>
+          `;
+          container.appendChild(div);
+        });
+      } catch (e) {
+        console.error('load announcements error', e);
+        container.innerHTML = '<p style="font-size:13px;color:#b91c1c;">Error loading announcements.</p>';
+      }
+    }
+
+    loadAnnouncements();
+  </script>
+</body>
+</html>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Course Detail – SkillForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #020617;
+    }
+    header h1 { font-size: 20px; }
+
+    .container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: calc(100vh - 64px);
+    }
+
+    .sidebar {
+      border-right: 1px solid #1f2937;
+      background: #020617;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .course-meta { margin-bottom: 16px; font-size: 14px; color: #9ca3af; }
+
+    .module {
+      margin-bottom: 12px;
+      border-radius: 6px;
+      background: #020617;
+      border: 1px solid #1f2937;
+      overflow: hidden;
+    }
+
+    .module-header {
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      background: #020617;
+    }
+    .module-header:hover { background: #111827; }
+
+    .module-title { font-weight: 600; }
+
+    .lessons {
+      display: none;
+      background: #020617;
+    }
+
+    .lesson {
+      padding: 8px 12px 8px 28px;
+      font-size: 13px;
+      cursor: pointer;
+      border-top: 1px solid #111827;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .lesson:hover { background: #111827; }
+
+    .lesson.active {
+      background: #1d4ed8;
+      color: #e5e7eb;
+    }
+
+    .lesson-meta {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-left: 4px;
+    }
+
+    .content-area {
+      padding: 16px 20px;
+      overflow-y: auto;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 45%);
+    }
+
+    .breadcrumb {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+
+    .lesson-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      background: #000;
+    }
+
+    .video-wrapper iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .article-body {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #e5e7eb;
+    }
+
+    .article-body h2,
+    .article-body h3 {
+      margin: 12px 0 6px;
+    }
+
+    .article-body p {
+      margin-bottom: 8px;
+    }
+
+    .empty-state {
+      font-size: 14px;
+      color: #9ca3af;
+      margin-top: 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #111827;
+      color: #d1d5db;
+      margin-left: 8px;
+    }
+
+    .module-toggle-icon {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    @media (max-width: 800px) {
+      .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 220px 1fr;
+      }
+      .sidebar { border-right: none; border-bottom: 1px solid #1f2937; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="courseTitle">Loading course...</h1>
+    <div class="course-meta" id="courseMeta"></div>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <div class="course-meta" id="courseStats"></div>
+      <div id="modulesContainer"></div>
+    </aside>
+
+    <main class="content-area">
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <button
+        id="completeLessonBtn"
+        style="display:none;margin-bottom:10px;padding:6px 10px;border:none;border-radius:4px;background:#22c55e;color:#020617;font-size:12px;cursor:pointer;"
+      >
+        Mark lesson as completed
+      </button>
+      <div id="contentRoot">
+        <p class="empty-state">Select a lesson from the left to start learning.</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentCourse = null;
+    let currentModuleIndex = null;
+    let currentLessonIndex = null;
+
+    function getCourseIdFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('course');
+    }
+
+    async function fetchCourseData(courseId) {
+      const res = await fetch('/api/courses/' + courseId + '/full', {
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to load course');
+      return res.json();
+    }
+
+    function renderSidebar(course) {
+      const courseTitleEl = document.getElementById('courseTitle');
+      const courseMetaEl = document.getElementById('courseMeta');
+      const courseStatsEl = document.getElementById('courseStats');
+      const modulesContainer = document.getElementById('modulesContainer');
+
+      courseTitleEl.textContent = course.title || 'Course';
+      courseMetaEl.textContent = course.semester
+        ? course.semester + ' • ' + (course.level || '')
+        : (course.level || '');
+
+      const totalModules = course.modules.length;
+      const totalLessons = course.modules.reduce(
+        (sum, m) => sum + (m.lessons ? m.lessons.length : 0),
+        0
+      );
+
+      courseStatsEl.textContent = totalModules + ' modules • ' + totalLessons + ' lessons';
+
+      modulesContainer.innerHTML = '';
+
+      course.modules.forEach((module, mIndex) => {
+        const moduleDiv = document.createElement('div');
+        moduleDiv.className = 'module';
+
+        const header = document.createElement('div');
+        header.className = 'module-header';
+        header.innerHTML = `
+          <span class="module-title">${module.title}</span>
+          <span class="module-toggle-icon">▼</span>
+        `;
+
+        const lessonsDiv = document.createElement('div');
+        lessonsDiv.className = 'lessons';
+
+        (module.lessons || []).forEach((lesson, lIndex) => {
+          const lessonDiv = document.createElement('div');
+          lessonDiv.className = 'lesson';
+          lessonDiv.dataset.moduleIndex = mIndex;
+          lessonDiv.dataset.lessonIndex = lIndex;
+
+          const left = document.createElement('div');
+          left.textContent = lesson.title;
+
+          const right = document.createElement('div');
+          right.className = 'lesson-meta';
+          right.textContent = lesson.content_type === 'video' ? 'Video' : 'Article';
+
+          lessonDiv.appendChild(left);
+          lessonDiv.appendChild(right);
+          lessonsDiv.appendChild(lessonDiv);
+        });
+
+        header.addEventListener('click', () => {
+          const isOpen = lessonsDiv.style.display === 'block';
+          lessonsDiv.style.display = isOpen ? 'none' : 'block';
+          const icon = header.querySelector('.module-toggle-icon');
+          icon.textContent = isOpen ? '▼' : '▲';
+        });
+
+        moduleDiv.appendChild(header);
+        moduleDiv.appendChild(lessonsDiv);
+        modulesContainer.appendChild(moduleDiv);
+      });
+    }
+
+    function renderLesson(course, moduleIndex, lessonIndex) {
+      currentCourse = course;
+      currentModuleIndex = moduleIndex;
+      currentLessonIndex = lessonIndex;
+
+      const breadcrumbEl = document.getElementById('breadcrumb');
+      const contentRoot = document.getElementById('contentRoot');
+      const completeBtn = document.getElementById('completeLessonBtn');
+
+      const module = course.modules[moduleIndex];
+      const lesson = module.lessons[lessonIndex];
+
+      breadcrumbEl.textContent = `${course.title} › ${module.title}`;
+
+      contentRoot.innerHTML = '';
+
+      completeBtn.style.display = 'inline-block';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'lesson-title';
+      titleEl.textContent = lesson.title;
+
+      const badgeEl = document.createElement('span');
+      badgeEl.className = 'badge';
+      badgeEl.textContent = lesson.content_type || 'Lesson';
+      titleEl.appendChild(badgeEl);
+
+      contentRoot.appendChild(titleEl);
+
+      if (lesson.content_type === 'video' && lesson.video_url) {
+        const videoWrapper = document.createElement('div');
+        videoWrapper.className = 'video-wrapper';
+
+        const iframe = document.createElement('iframe');
+        iframe.src = lesson.video_url;
+        iframe.allow =
+          'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.allowFullscreen = true;
+
+        videoWrapper.appendChild(iframe);
+        contentRoot.appendChild(videoWrapper);
+      }
+
+      if (lesson.body_html) {
+        const articleDiv = document.createElement('div');
+        articleDiv.className = 'article-body';
+        articleDiv.innerHTML = lesson.body_html;
+        contentRoot.appendChild(articleDiv);
+      }
+
+      if (!lesson.video_url && !lesson.body_html) {
+        const empty = document.createElement('p');
+        empty.className = 'empty-state';
+        empty.textContent = 'No content available for this lesson yet.';
+        contentRoot.appendChild(empty);
+      }
+
+      document
+        .querySelectorAll('.lesson')
+        .forEach(el => el.classList.remove('active'));
+
+      const selector =
+        '.lesson[data-module-index="' + moduleIndex + '"][data-lesson-index="' + lessonIndex + '"]';
+      const activeEl = document.querySelector(selector);
+      if (activeEl) activeEl.classList.add('active');
+    }
+
+    function wireLessonClicks(course) {
+      document.getElementById('modulesContainer').addEventListener('click', e => {
+        const lessonEl = e.target.closest('.lesson');
+        if (!lessonEl) return;
+
+        const mIndex = parseInt(lessonEl.dataset.moduleIndex, 10);
+        const lIndex = parseInt(lessonEl.dataset.lessonIndex, 10);
+        renderLesson(course, mIndex, lIndex);
+      });
+    }
+
+    async function completeCurrentLesson() {
+      if (currentCourse == null || currentModuleIndex == null || currentLessonIndex == null) return;
+
+      const module = currentCourse.modules[currentModuleIndex];
+      const lesson = module.lessons[currentLessonIndex];
+
+      try {
+        const res = await fetch('/api/lessons/' + lesson.id + '/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (!res.ok) throw new Error('Failed to complete lesson');
+        const data = await res.json();
+
+        alert(
+          'Progress updated: ' +
+            data.completed_lessons +
+            '/' +
+            data.total_lessons +
+            ' lessons (' +
+            data.progress_percent.toFixed(1) +
+            '%)'
+        );
+      } catch (err) {
+        console.error(err);
+        alert('Could not update progress');
+      }
+    }
+
+    (async function init() {
+      try {
+        const courseId = getCourseIdFromQuery();
+        if (!courseId) {
+          alert('Missing course id in URL');
+          return;
+        }
+
+        const data = await fetchCourseData(courseId);
+        const course = data.course || {};
+        const modules = data.modules || [];
+        const lessons = data.lessons || [];
+
+        const lessonsByModule = {};
+        lessons.forEach(l => {
+          if (!lessonsByModule[l.module_id]) lessonsByModule[l.module_id] = [];
+          lessonsByModule[l.module_id].push(l);
+        });
+
+        course.modules = modules.map(m => ({
+          ...m,
+          lessons: (lessonsByModule[m.id] || []).sort(
+            (a, b) => (a.position || 0) - (b.position || 0) || a.id - b.id
+          )
+        }));
+
+        renderSidebar(course);
+        wireLessonClicks(course);
+
+        document
+          .getElementById('completeLessonBtn')
+          .addEventListener('click', completeCurrentLesson);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to load course');
+      }
+    })();
+  </script>
+</body>
+</html>

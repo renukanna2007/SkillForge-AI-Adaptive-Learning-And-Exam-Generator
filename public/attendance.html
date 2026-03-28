@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Attendance - SkillForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1f2937;
+      background: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .left-head {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .left-head h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .left-head small {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .top-right button {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: transparent;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #60a5fa;
+      text-decoration: none;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .section-sub {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid #1f2937;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #030712;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background: #020819;
+    }
+    .present {
+      color: #22c55e;
+      font-weight: 600;
+    }
+    .absent {
+      color: #f97373;
+      font-weight: 600;
+    }
+
+    .summary {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="left-head">
+    <h1>My Attendance</h1>
+    <small id="studentMeta">Attendance details for you</small>
+  </div>
+  <div class="top-right">
+    <button id="logoutBtn">Logout</button>
+  </div>
+</header>
+
+<main>
+  <a href="/student-dashboard" class="back-link">← Back to dashboard</a>
+
+  <h2 class="section-title">Attendance record</h2>
+  <p class="section-sub">These entries come from the SkillForge attendance table.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Course ID</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="attBody">
+      <tr><td colspan="3">Loading attendance...</td></tr>
+    </tbody>
+  </table>
+
+  <div class="summary" id="attSummary"></div>
+</main>
+
+<script>
+  const API_BASE = '';
+
+  function getStudentLabel() {
+    const name = localStorage.getItem('sf_name') || '';
+    const email = localStorage.getItem('sf_email') || '';
+    return name || email || 'Student';
+  }
+
+  function applyMeta() {
+    const meta = document.getElementById('studentMeta');
+    meta.textContent = `Attendance details for ${getStudentLabel()}`;
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) {}
+    localStorage.clear();
+    window.location.href = '/login.html';
+  });
+
+  async function loadAttendance() {
+    const token = localStorage.getItem('sf_token') || '';
+    const tbody = document.getElementById('attBody');
+    const summary = document.getElementById('attSummary');
+
+    tbody.innerHTML = '<tr><td colspan="3">Loading attendance...</td></tr>';
+    summary.textContent = '';
+
+    try {
+      const res = await fetch(API_BASE + '/api/attendance', {
+        headers: { 'Authorization': 'Bearer ' + token },
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        tbody.innerHTML = '<tr><td colspan="3">Failed to load attendance.</td></tr>';
+        return;
+      }
+      const rows = await res.json();
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="3">No attendance records.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      let present = 0;
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        const tdDate = document.createElement('td');
+        const tdCourse = document.createElement('td');
+        const tdStatus = document.createElement('td');
+
+        tdDate.textContent = r.date;
+        tdCourse.textContent = r.course_id;
+        if (r.present) {
+          tdStatus.textContent = 'Present';
+          tdStatus.className = 'present';
+          present++;
+        } else {
+          tdStatus.textContent = 'Absent';
+          tdStatus.className = 'absent';
+        }
+
+        tr.appendChild(tdDate);
+        tr.appendChild(tdCourse);
+        tr.appendChild(tdStatus);
+        tbody.appendChild(tr);
+      });
+
+      const total = rows.length;
+      const pct = total ? Math.round((present / total) * 100) : 0;
+      summary.textContent = `Total classes: ${total} · Presents: ${present} · Attendance: ${pct}%`;
+    } catch (e) {
+      console.error('attendance load error', e);
+      tbody.innerHTML = '<tr><td colspan="3">Error loading attendance.</td></tr>';
+    }
+  }
+
+  applyMeta();
+  loadAttendance();
+</script>
+</body>
+</html>

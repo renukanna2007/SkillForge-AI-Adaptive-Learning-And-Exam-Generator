@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SkillForge • Admin Progress</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1f2937;
+      background: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .left-head {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .left-head h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .left-head small {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .top-right button {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: transparent;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      font-size: 12px;
+      color: #60a5fa;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .section-sub {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .filters select {
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+    .table th, .table td {
+      border-bottom: 1px solid #111827;
+      padding: 8px 6px;
+      text-align: left;
+    }
+    .table th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #9ca3af;
+      background: #020617;
+    }
+
+    .bar-wrap {
+      width: 100%;
+      max-width: 180px;
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      overflow: hidden;
+      height: 14px;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg,#22c55e,#3b82f6);
+    }
+    .bar-text {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="left-head">
+    <h1>Student Progress</h1>
+    <small id="adminMeta">Loading admin info…</small>
+  </div>
+  <div class="top-right">
+    <button id="logoutBtn">Logout</button>
+  </div>
+</header>
+
+<main>
+  <a class="back-link" href="/admin-dashboard">
+    ← Back to admin dashboard
+  </a>
+
+  <h2 class="section-title">Course completion overview</h2>
+  <p class="section-sub">View how students are progressing across courses.</p>
+
+  <div class="filters">
+    <label>
+      Course:
+      <select id="courseFilter">
+        <option value="">All</option>
+      </select>
+    </label>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Student</th>
+        <th>Course</th>
+        <th>Progress</th>
+      </tr>
+    </thead>
+    <tbody id="progTbody"></tbody>
+  </table>
+</main>
+
+<script>
+  const API_BASE = '';
+
+  function getStoredAdmin() {
+    const name = localStorage.getItem('sf_name') || '';
+    const email = localStorage.getItem('sf_email') || '';
+    const role = localStorage.getItem('sf_role') || '';
+    return { name, email, role };
+  }
+
+  function applyAdminInfo() {
+    const { name, email } = getStoredAdmin();
+    const metaEl = document.getElementById('adminMeta');
+
+    if (name) {
+      metaEl.textContent = 'Signed in as ' + name + ' (admin)';
+    } else if (email) {
+      metaEl.textContent = 'Signed in as ' + email + ' (admin)';
+    } else {
+      metaEl.textContent = 'Signed in as admin';
+    }
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) {}
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_role');
+    localStorage.removeItem('sf_name');
+    localStorage.removeItem('sf_email');
+    window.location.href = '/login.html';
+  });
+
+  let allProgress = [];
+
+  function populateCourseFilter() {
+    const select = document.getElementById('courseFilter');
+    const set = new Set();
+    allProgress.forEach(r => {
+      if (r.course_title) set.add(r.course_title);
+    });
+
+    select.innerHTML = '<option value="">All</option>';
+    Array.from(set).sort().forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      select.appendChild(opt);
+    });
+  }
+
+  function renderProgress() {
+    const tbody = document.getElementById('progTbody');
+    const courseVal = document.getElementById('courseFilter').value;
+    tbody.innerHTML = '';
+
+    const filtered = allProgress.filter(r => {
+      if (courseVal && r.course_title !== courseVal) return false;
+      return true;
+    });
+
+    filtered.forEach(r => {
+      const tr = document.createElement('tr');
+      const pct = Math.round(r.progress_percent || 0);
+
+      const bar = `
+        <div class="bar-wrap">
+          <div class="bar-fill" style="width:${pct}%;"></div>
+        </div>
+        <div class="bar-text">${pct}% complete</div>
+      `;
+
+      tr.innerHTML = `
+        <td>${r.student_name || r.student_email || '-'}</td>
+        <td>${r.course_title || '-'}</td>
+        <td>${bar}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function loadProgress() {
+    const token = localStorage.getItem('sf_token') || '';
+    const headers = { 'Authorization': 'Bearer ' + token };
+
+    try {
+      const res = await fetch(API_BASE + '/api/admin/progress', {
+        headers,
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        console.error('Failed to load admin progress');
+        return;
+      }
+      allProgress = await res.json();
+      console.log('ADMIN PROGRESS DATA', allProgress);
+      populateCourseFilter();
+      renderProgress();
+    } catch (e) {
+      console.error('admin progress page error', e);
+    }
+  }
+
+  document.getElementById('courseFilter').addEventListener('change', renderProgress);
+
+  applyAdminInfo();
+  loadProgress();
+</script>
+</body>
+</html>

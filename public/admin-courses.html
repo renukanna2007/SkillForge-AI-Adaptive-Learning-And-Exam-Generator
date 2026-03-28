@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Courses - SkillForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 24px 28px;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.15);
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      color: #111827;
+    }
+    .subtitle {
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #111827;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .form-card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 16px 18px 18px;
+      margin-bottom: 20px;
+      border-left: 4px solid #6366f1;
+    }
+    .form-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 70px;
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      resize: vertical;
+    }
+    .inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #374151;
+    }
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #6366f1;
+      color: #f9fafb;
+    }
+    .btn-primary:hover {
+      background: #4f46e5;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+      margin-left: 8px;
+    }
+
+    .list-card {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 14px 16px 16px;
+      border-left: 4px solid #0ea5e9;
+    }
+    .course-row {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 8px;
+    }
+    .course-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 2px;
+    }
+    .course-meta {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .course-desc {
+      font-size: 13px;
+      color: #374151;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/admin-dashboard" class="back-link">← Back to admin dashboard</a>
+
+    <h1>Admin Courses</h1>
+    <p class="subtitle">Create and manage courses that students will see in their dashboards.</p>
+
+    <!-- Top: create course form -->
+    <div class="form-card">
+      <form id="courseForm" onsubmit="return createCourse(event)">
+        <div class="form-group">
+          <label for="titleInput">Course title</label>
+          <input type="text" id="titleInput" required placeholder="e.g. Data Structures">
+        </div>
+        <div class="form-group">
+          <label for="descInput">Description</label>
+          <textarea id="descInput" placeholder="Short summary of the course..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="semInput">Semester (optional)</label>
+          <input type="number" id="semInput" min="1" max="10" placeholder="e.g. 3">
+        </div>
+        <div class="form-group inline">
+          <input type="checkbox" id="publishInput" checked>
+          <label for="publishInput" style="margin:0;">Published (visible to students)</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Course</button>
+        <button type="button" class="btn btn-secondary" onclick="resetCourseForm()">Reset</button>
+      </form>
+    </div>
+
+    <!-- Bottom: list existing courses -->
+    <div class="list-card">
+      <h2 style="font-size:15px; margin:0 0 8px; color:#111827;">Existing Courses</h2>
+      <div id="coursesList">
+        <p style="font-size:13px;color:#6b7280;">Loading courses...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+
+    function getToken() {
+      return localStorage.getItem('sf_token') || '';
+    }
+
+    function resetCourseForm() {
+      document.getElementById('titleInput').value = '';
+      document.getElementById('descInput').value = '';
+      document.getElementById('semInput').value = '';
+      document.getElementById('publishInput').checked = true;
+    }
+
+    async function createCourse(event) {
+      event.preventDefault();
+      const token = getToken();
+
+      const body = {
+        title: document.getElementById('titleInput').value.trim(),
+        description: document.getElementById('descInput').value.trim(),
+        semester: document.getElementById('semInput').value
+          ? Number(document.getElementById('semInput').value)
+          : null,
+        is_published: document.getElementById('publishInput').checked,
+      };
+
+      if (!body.title) {
+        alert('Course title is required');
+        return false;
+      }
+
+      try {
+        const res = await fetch(API_BASE + '/api/admin/courses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          alert('Failed to create course');
+          return false;
+        }
+        resetCourseForm();
+        await loadCourses();
+        alert('Course created');
+      } catch (e) {
+        console.error('create course error', e);
+        alert('Error creating course');
+      }
+      return false;
+    }
+
+    async function loadCourses() {
+      const token = getToken();
+      const container = document.getElementById('coursesList');
+
+      try {
+        const res = await fetch(API_BASE + '/api/admin/courses', {
+          headers: { 'Authorization': 'Bearer ' + token },
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          container.innerHTML = '<p style="font-size:13px;color:#b91c1c;">Failed to load courses.</p>';
+          return;
+        }
+        const data = await res.json();
+        if (!data.length) {
+          container.innerHTML = '<p style="font-size:13px;color:#6b7280;">No courses yet.</p>';
+          return;
+        }
+
+        container.innerHTML = '';
+        data.forEach(c => {
+          const div = document.createElement('div');
+          div.className = 'course-row';
+          const sem = c.semester ? 'Semester ' + c.semester : 'No semester set';
+          const published = c.is_published ? 'Published' : 'Hidden';
+          div.innerHTML = `
+            <div class="course-title">${c.title || 'Untitled course'}</div>
+            <div class="course-meta">${sem} · ${published}</div>
+            <div class="course-desc">${c.description || 'No description yet.'}</div>
+          `;
+          container.appendChild(div);
+        });
+      } catch (e) {
+        console.error('load courses error', e);
+        container.innerHTML = '<p style="font-size:13px;color:#b91c1c;">Error loading courses.</p>';
+      }
+    }
+
+    loadCourses();
+  </script>
+</body>
+</html>

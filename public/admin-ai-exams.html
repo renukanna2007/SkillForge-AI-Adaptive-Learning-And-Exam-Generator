@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SkillForge • Admin AI Exams</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{
+      min-height:100vh;
+      font-family:'Segoe UI',system-ui,sans-serif;
+      background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 45%,#f59e0b 100%);
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:24px;
+      color:#e5e7eb;
+    }
+    .shell{
+      width:100%;
+      max-width:1100px;
+      background:rgba(15,23,42,0.96);
+      border-radius:24px;
+      padding:20px 22px;
+      box-shadow:0 24px 60px rgba(15,23,42,0.9);
+      border:1px solid rgba(251,191,36,0.6);
+    }
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:16px;
+    }
+    .title-main{
+      font-size:22px;
+      font-weight:600;
+    }
+    .accent-gold{color:#facc15;}
+    .accent-blue{color:#60a5fa;}
+    .meta{
+      font-size:12px;
+      color:#9ca3af;
+      margin-bottom:12px;
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:16px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      font-size:12px;
+    }
+    .field input,
+    .field select,
+    .field textarea{
+      padding:7px 9px;
+      border-radius:10px;
+      border:1px solid rgba(148,163,184,0.7);
+      background:#0b1120;
+      color:#e5e7eb;
+      font-family:inherit;
+      font-size:13px;
+      min-width:180px;
+    }
+    .field textarea{
+      min-height:60px;
+      resize:vertical;
+    }
+    .badge-role{
+      padding:4px 9px;
+      border-radius:999px;
+      border:1px solid rgba(96,165,250,0.8);
+      font-size:11px;
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      background:rgba(15,23,42,0.9);
+    }
+    .btn{
+      border:none;
+      border-radius:999px;
+      padding:8px 14px;
+      font-size:13px;
+      font-weight:500;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .btn-primary{
+      background:#facc15;
+      color:#111827;
+    }
+    .btn-ghost{
+      background:transparent;
+      border:1px solid rgba(148,163,184,0.6);
+      color:#e5e7eb;
+    }
+    .two-col{
+      display:grid;
+      grid-template-columns:1.1fr 0.9fr;
+      gap:14px;
+    }
+    @media(max-width:900px){
+      .two-col{grid-template-columns:1fr;}
+    }
+    .panel{
+      background:#020617;
+      border-radius:16px;
+      padding:12px 12px;
+      border:1px solid rgba(31,41,55,0.9);
+    }
+    .panel h3{
+      font-size:14px;
+      margin-bottom:8px;
+    }
+    .status{
+      font-size:11px;
+      margin-bottom:8px;
+      color:#9ca3af;
+    }
+    .status span.ok{color:#22c55e;}
+    .status span.err{color:#f97316;}
+    pre{
+      background:#020617;
+      border-radius:10px;
+      padding:10px;
+      font-size:11px;
+      overflow:auto;
+      max-height:320px;
+      border:1px solid rgba(30,64,175,0.9);
+    }
+    .exam-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:6px;
+      font-size:12px;
+      color:#cbd5f5;
+    }
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+      margin-top:6px;
+    }
+    .table th,
+    .table td{
+      border-bottom:1px solid rgba(31,41,55,0.9);
+      padding:6px 4px;
+      text-align:left;
+    }
+    .pill{
+      padding:2px 7px;
+      border-radius:999px;
+      font-size:11px;
+      border:1px solid rgba(148,163,184,0.7);
+      display:inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header">
+      <div>
+        <div class="title-main">
+          Admin <span class="accent-gold">AI Exams</span> console
+        </div>
+        <div class="meta">
+          Generate and manage AI‑based exams for SkillForge cohorts.
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge-role" id="admin-badge">
+          ⚙️ Admin mode
+        </span>
+        <button class="btn btn-ghost" onclick="logout()">
+          ⏏ Logout
+        </button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="field">
+        <label for="topic">Topic / Unit</label>
+        <input id="topic" type="text" placeholder="e.g. OOPS in Java, DBMS normalization">
+      </div>
+      <div class="field">
+        <label for="difficulty">Difficulty</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1;min-width:220px;">
+        <label for="notes">Admin notes (optional)</label>
+        <textarea id="notes" placeholder="Any constraints: number of questions, concepts to focus, etc."></textarea>
+      </div>
+      <div style="align-self:flex-end;">
+        <button class="btn btn-primary" onclick="generateExam()">
+          🤖 Generate AI exam
+        </button>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <h3>Latest generated exam (JSON)</h3>
+        <div class="status" id="status-text">
+          Status: <span>Idle</span>
+        </div>
+        <pre id="json-output">{ /* AI‑generated exam JSON will appear here */ }</pre>
+      </div>
+
+      <div class="panel">
+        <div class="exam-header">
+          <span>Exam summary</span>
+          <span id="summary-topic" class="pill">No exam yet</span>
+        </div>
+        <table class="table">
+          <tbody>
+            <tr>
+              <th>Topic</th>
+              <td id="summary-topic-text">—</td>
+            </tr>
+            <tr>
+              <th>Difficulty</th>
+              <td id="summary-difficulty">—</td>
+            </tr>
+            <tr>
+              <th># Questions</th>
+              <td id="summary-count">—</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="status" style="margin-top:10px;">
+          Only admins can generate and save exams. Students will see only published exams.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Guard: require logged-in admin
+    (function guard() {
+      const token = localStorage.getItem('sf_token');
+      const role  = localStorage.getItem('sf_role');
+      const name  = localStorage.getItem('sf_name') || 'Admin';
+
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+      if (role !== 'admin') {
+        // non-admin → send to student AI exams
+        window.location.href = '/ai-exams.html';
+        return;
+      }
+
+      const badge = document.getElementById('admin-badge');
+      badge.textContent = '⚙️ Admin: ' + name;
+    })();
+
+    async function generateExam() {
+      const token = localStorage.getItem('sf_token');
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+
+      const topic = document.getElementById('topic').value.trim();
+      const difficulty = document.getElementById('difficulty').value;
+      const notes = document.getElementById('notes').value.trim();
+      const statusEl = document.getElementById('status-text');
+      const jsonEl = document.getElementById('json-output');
+
+      if (!topic) {
+        alert('Please enter a topic/unit for the exam.');
+        return;
+      }
+
+      statusEl.innerHTML = 'Status: <span class="ok">Generating via AI…</span>';
+      jsonEl.textContent = 'Generating exam...';
+
+      try {
+        const res = await fetch('/api/ai-exams/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ topic, difficulty, notes })
+        });
+
+        if (res.status === 401) {
+          // token invalid/expired: force re‑login
+          localStorage.clear();
+          window.location.href = '/';
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          statusEl.innerHTML = 'Status: <span class="err">Error from server</span>';
+          alert(data.message || 'Failed to generate AI exam');
+          jsonEl.textContent = JSON.stringify(data, null, 2);
+          return;
+        }
+
+        // Assume backend returns an exam object, or { exam: { ... } }
+        const exam = data.exam || data;
+
+        jsonEl.textContent = JSON.stringify(exam, null, 2);
+        statusEl.innerHTML = 'Status: <span class="ok">Exam generated</span>';
+
+        // Update summary
+        try {
+          const questions = exam.questions || [];
+          document.getElementById('summary-topic').textContent =
+            exam.title || topic;
+          document.getElementById('summary-topic-text').textContent =
+            exam.title || topic;
+          document.getElementById('summary-difficulty').textContent =
+            exam.difficulty || difficulty || '—';
+          document.getElementById('summary-count').textContent =
+            Array.isArray(questions) ? questions.length : '—';
+        } catch (e) {
+          console.error('Summary update failed', e);
+        }
+      } catch (err) {
+        console.error(err);
+        statusEl.innerHTML = 'Status: <span class="err">Network error</span>';
+        jsonEl.textContent = 'Network error while generating exam.';
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>

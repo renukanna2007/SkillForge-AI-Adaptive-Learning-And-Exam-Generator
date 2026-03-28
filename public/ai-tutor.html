@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SkillForge AI Tutor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      padding: 12px 16px;
+      background: #020617;
+      border-bottom: 1px solid #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+    header span {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+    #chat-container {
+      flex: 1;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-y: auto;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+    }
+    .msg {
+      margin-bottom: 12px;
+      max-width: 80%;
+      line-height: 1.4;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .msg.user {
+      margin-left: auto;
+      text-align: right;
+    }
+    .msg.assistant {
+      margin-right: auto;
+    }
+    .bubble {
+      display: inline-block;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+    .user .bubble {
+      background: #2563eb;
+      color: #f9fafb;
+      border-bottom-right-radius: 2px;
+    }
+    .assistant .bubble {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-bottom-left-radius: 2px;
+    }
+    .meta {
+      display: block;
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 2px;
+    }
+    form {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #1f2937;
+    }
+    textarea {
+      flex: 1;
+      resize: none;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 14px;
+    }
+    button {
+      padding: 0 16px;
+      border-radius: 8px;
+      border: none;
+      background: #22c55e;
+      color: #022c22;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      min-width: 80px;
+    }
+    button[disabled] {
+      opacity: 0.6;
+      cursor: default;
+    }
+    #status {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    @media (max-width: 640px) {
+      main { padding: 8px; }
+      #chat-container { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SkillForge AI Tutor</h1>
+    <span id="modelLabel">Model: TinyLlama-1.1B-Chat</span>
+  </header>
+
+  <main>
+    <div id="chat-container"></div>
+
+    <form id="chat-form">
+      <textarea
+        id="prompt"
+        placeholder="Ask about your courses, concepts, or exam questions..."
+      ></textarea>
+      <button type="submit">Send</button>
+    </form>
+
+    <div id="status"></div>
+  </main>
+
+  <script>
+    const chatContainer = document.getElementById('chat-container');
+    const form = document.getElementById('chat-form');
+    const promptInput = document.getElementById('prompt');
+    const statusEl = document.getElementById('status');
+    const sendBtn = form.querySelector('button');
+
+    const messages = [];
+
+    function addMessage(role, text) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'msg ' + (role === 'user' ? 'user' : 'assistant');
+
+      const meta = document.createElement('span');
+      meta.className = 'meta';
+      meta.textContent = role === 'user' ? 'You' : 'AI Tutor';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+
+      wrapper.appendChild(meta);
+      wrapper.appendChild(bubble);
+      chatContainer.appendChild(wrapper);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function sendToTutor(prompt) {
+      statusEl.textContent = 'Thinking...';
+      sendBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/ai-tutor/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+            // JWT is already in cookie (token), so no Authorization header needed
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            prompt,
+            history: messages.slice(-10) // optional: last exchanges
+          })
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.message || 'Request failed');
+        }
+
+        const data = await res.json();
+        const reply = data.reply || '(No response)';
+        messages.push({ role: 'assistant', content: reply });
+        addMessage('assistant', reply);
+        statusEl.textContent = '';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Error: ' + err.message;
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const prompt = promptInput.value.trim();
+      if (!prompt) return;
+
+      messages.push({ role: 'user', content: prompt });
+      addMessage('user', prompt);
+      promptInput.value = '';
+      sendToTutor(prompt);
+    });
+
+    // Optional welcome message
+    addMessage(
+      'assistant',
+      'Hi! I am your SkillForge AI Tutor. Ask me about topics in your enrolled courses, tricky concepts, or practice questions, and I will explain them.'
+    );
+  </script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Enrollments – SkillForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1f2937;
+      background: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    main {
+      padding: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    a.back-link:hover { text-decoration: underline; }
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    select {
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      color: #e5e7eb;
+      padding: 4px 8px;
+      font-size: 13px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid #1f2937;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      background: #030712;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background: #020819;
+    }
+    .empty {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Admin Enrollments</h1>
+  <button id="logoutBtn" style="padding:4px 10px;border-radius:999px;border:1px solid #4b5563;background:transparent;color:#e5e7eb;cursor:pointer;">
+    Logout
+  </button>
+</header>
+
+<main>
+  <a href="/admin-dashboard" class="back-link">← Back to admin dashboard</a>
+
+  <div class="filters">
+    <label>
+      Course:
+      <select id="courseFilter">
+        <option value="">All</option>
+      </select>
+    </label>
+    <label>
+      Student:
+      <select id="studentFilter">
+        <option value="">All</option>
+      </select>
+    </label>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Enrolled on</th>
+        <th>Student</th>
+        <th>Roll</th>
+        <th>Course</th>
+        <th>Level/Sem</th>
+        <th>Completion %</th>
+      </tr>
+    </thead>
+    <tbody id="enrBody">
+      <tr><td colspan="6">Loading enrollments...</td></tr>
+    </tbody>
+  </table>
+
+  <div class="empty" id="emptyMsg" style="display:none;">
+    No enrollments found for this filter.
+  </div>
+</main>
+
+<script>
+  const API_BASE = '';
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await fetch(API_BASE + '/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {}
+    localStorage.clear();
+    window.location.href = '/login.html';
+  });
+
+  let allEnrollments = [];
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString();
+  }
+
+  function renderEnrollments() {
+    const tbody = document.getElementById('enrBody');
+    const empty = document.getElementById('emptyMsg');
+    const courseFilter = document.getElementById('courseFilter').value;
+    const studentFilter = document.getElementById('studentFilter').value;
+
+    tbody.innerHTML = '';
+
+    const filtered = allEnrollments.filter(r => {
+      if (courseFilter && String(r.course_id) !== courseFilter) return false;
+      if (studentFilter && String(r.student_id) !== studentFilter) return false;
+      return true;
+    });
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="6">No enrollments.</td></tr>';
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+
+    filtered.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${formatDate(r.enrolled_at)}</td>
+        <td>${r.student_name || ''}</td>
+        <td>${r.roll_number || ''}</td>
+        <td>${r.course_title || ''}</td>
+        <td>${r.course_semester || r.course_level || ''}</td>
+        <td>${r.completion_percent != null ? Math.round(r.completion_percent) + '%' : '-'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function loadEnrollments() {
+    const token = localStorage.getItem('sf_token') || '';
+    const tbody = document.getElementById('enrBody');
+    const courseSel = document.getElementById('courseFilter');
+    const studentSel = document.getElementById('studentFilter');
+
+    tbody.innerHTML = '<tr><td colspan="6">Loading enrollments...</td></tr>';
+
+    try {
+      const res = await fetch(API_BASE + '/api/admin/enrollments', {
+        headers: { Authorization: 'Bearer ' + token },
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('enrollments error', res.status, text);
+        tbody.innerHTML = '<tr><td colspan="6">Failed to load enrollments.</td></tr>';
+        return;
+      }
+      const rows = await res.json();
+      allEnrollments = rows || [];
+
+      // Fill filters
+      const coursesMap = new Map();
+      const studentsMap = new Map();
+      allEnrollments.forEach(r => {
+        if (r.course_id) {
+          coursesMap.set(
+            String(r.course_id),
+            r.course_title || ('Course #' + r.course_id)
+          );
+        }
+        if (r.student_id) {
+          studentsMap.set(
+            String(r.student_id),
+            (r.roll_number ? r.roll_number + ' ' : '') + (r.student_name || '')
+          );
+        }
+      });
+
+      courseSel.innerHTML = '<option value="">All</option>';
+      for (const [id, title] of coursesMap) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = title;
+        courseSel.appendChild(opt);
+      }
+
+      studentSel.innerHTML = '<option value="">All</option>';
+      for (const [id, label] of studentsMap) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = label;
+        studentSel.appendChild(opt);
+      }
+
+      renderEnrollments();
+    } catch (e) {
+      console.error('enrollments load error', e);
+      tbody.innerHTML = '<tr><td colspan="6">Error loading enrollments.</td></tr>';
+    }
+  }
+
+  document.getElementById('courseFilter').addEventListener('change', renderEnrollments);
+  document.getElementById('studentFilter').addEventListener('change', renderEnrollments);
+
+  loadEnrollments();
+</script>
+</body>
+</html>

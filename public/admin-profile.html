@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillForge - Admin Profile</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #f97316 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.96);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(45deg, #f97316, #fbbf24);
+      color: #111827;
+      padding: 24px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .header p {
+      font-size: 14px;
+      color: #374151;
+    }
+    .back-link {
+      display: inline-block;
+      margin: 12px 40px 0;
+      color: #111827;
+      font-weight: 500;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 30px 40px;
+      border-bottom: 1px solid #e1e5e9;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, #1e3a8a, #0ea5e9);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5em;
+      color: white;
+      overflow: hidden;
+    }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .profile-info h2 { color: #111827; margin-bottom: 6px; }
+    .profile-info p { color: #4b5563; font-size: 14px; margin-bottom: 4px; }
+    .tagline { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+    .content {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 30px;
+      padding: 30px 40px 40px;
+    }
+    .card {
+      background: #f9fafb;
+      padding: 24px 24px 22px;
+      border-radius: 15px;
+      border-left: 5px solid #f97316;
+      font-size: 14px;
+    }
+    .card h3 {
+      color: #111827;
+      margin-bottom: 12px;
+      font-size: 1.2em;
+    }
+    .info-row { margin-bottom: 6px; }
+    .info-label {
+      font-weight: 600;
+      color: #374151;
+    }
+    .info-value {
+      color: #4b5563;
+      margin-left: 4px;
+    }
+
+    .scope-list {
+      list-style: disc;
+      margin-left: 18px;
+      color: #4b5563;
+      font-size: 13px;
+    }
+    .scope-list li { margin-bottom: 4px; }
+
+    .logout-btn {
+      background: #b91c1c;
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .profile-input {
+      margin-left: 4px;
+      padding: 2px 4px;
+      width: 60%;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      color: #111827;
+    }
+    .profile-textarea {
+      margin-left: 4px;
+      padding: 4px 6px;
+      width: 90%;
+      min-height: 60px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      color: #111827;
+      resize: vertical;
+    }
+    .save-btn {
+      background: #1e3a8a;
+      color: #ffffff;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .content { grid-template-columns: 1fr; padding: 24px 20px 30px; }
+      .profile-card { flex-direction: column; text-align: center; padding: 24px 20px; }
+      .back-link { margin-left: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="header">
+      <h1>Admin Profile</h1>
+      <p id="headerLine">View admin details and access scope.</p>
+    </div>
+
+    <a href="/admin-dashboard" class="back-link">← Back to dashboard</a>
+
+    <div class="profile-card">
+      <div class="avatar" id="avatarContainer">
+        <span id="avatarInitial">A</span>
+      </div>
+      <div class="profile-info">
+        <h2 id="userName">Loading...</h2>
+        <p id="userEmail">admin@example.com</p>
+        <p id="userRole">Admin</p>
+        <p class="tagline" id="userTagline"></p>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="card">
+        <h3>👤 Admin Information</h3>
+
+        <!-- Existing read-only display -->
+        <div class="info-row"><span class="info-label">Department:</span><span class="info-value" id="infoDept">–</span></div>
+        <div class="info-row"><span class="info-label">Phone:</span><span class="info-value" id="infoPhone">–</span></div>
+        <div class="info-row"><span class="info-label">Address:</span><span class="info-value" id="infoAddress">–</span></div>
+        <div class="info-row"><span class="info-label">Bio:</span><span class="info-value" id="infoBio">–</span></div>
+
+        <hr style="margin: 12px 0 10px; border: none; border-top: 1px dashed #d1d5db;">
+        <p style="font-size:12px;color:#6b7280;margin-bottom:6px;">Update admin contact details and click Save.</p>
+
+        <form id="adminProfileForm" onsubmit="return saveAdminProfile(event)">
+          <div class="info-row">
+            <span class="info-label">Department:</span>
+            <input id="adminDeptInput" name="department" class="profile-input" />
+          </div>
+          <div class="info-row">
+            <span class="info-label">Phone:</span>
+            <input id="adminPhoneInput" name="phone" class="profile-input" />
+          </div>
+          <div class="info-row">
+            <span class="info-label">Address:</span>
+            <input id="adminAddressInput" name="address" class="profile-input" />
+          </div>
+          <div class="info-row" style="margin-top:6px;">
+            <span class="info-label">Bio:</span>
+            <textarea id="adminBioInput" name="bio" class="profile-textarea"></textarea>
+          </div>
+
+          <!-- New: photo URL for admin -->
+          <div class="info-row" style="margin-top:8px;">
+            <span class="info-label">Photo URL:</span>
+            <input id="adminPhotoInput" name="photo" class="profile-input" />
+          </div>
+
+          <button type="submit" class="save-btn">Save Admin Profile</button>
+          <button type="button" class="save-btn" style="background:#6b7280;margin-left:8px;" onclick="resetAdminProfileForm()">
+            Reset Profile
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>🔐 Access Scope</h3>
+        <ul class="scope-list">
+          <li>Manage courses and enrollments.</li>
+          <li>View attendance and student progress.</li>
+          <li>Create announcements and AI exams.</li>
+          <li>Monitor database-level activity.</li>
+          <li>Respond to student messages.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+
+    function logout() {
+      fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+      localStorage.removeItem('sf_token');
+      localStorage.removeItem('sf_role');
+      localStorage.removeItem('sf_name');
+      localStorage.removeItem('sf_email');
+      window.location.href = '/login.html';
+    }
+
+    async function loadAdminProfile() {
+      const token = localStorage.getItem('sf_token') || '';
+      try {
+        const res = await fetch(API_BASE + '/api/profile', {
+          headers: { 'Authorization': 'Bearer ' + token },
+          credentials: 'include'
+        });
+        if (!res.ok) return;
+
+        const user = await res.json();
+        const name = user.full_name || localStorage.getItem('sf_name') || 'Admin';
+        const email = user.email || localStorage.getItem('sf_email') || '';
+
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userEmail').textContent = email || 'No email';
+        document.getElementById('userRole').textContent = 'Admin';
+        document.getElementById('headerLine').textContent = 'Admin can update contact info and see access scope.';
+
+        // Read-only display
+        document.getElementById('infoDept').textContent = user.department || 'Not set';
+        document.getElementById('infoPhone').textContent = user.phone || 'Not set';
+        document.getElementById('infoAddress').textContent = user.address || 'Not set';
+        document.getElementById('infoBio').textContent = user.bio || 'No bio added yet.';
+
+        // Prefill editable inputs
+        document.getElementById('adminDeptInput').value = user.department || '';
+        document.getElementById('adminPhoneInput').value = user.phone || '';
+        document.getElementById('adminAddressInput').value = user.address || '';
+        document.getElementById('adminBioInput').value = user.bio || '';
+        document.getElementById('adminPhotoInput').value = user.photo || '';
+
+        const avatarContainer = document.getElementById('avatarContainer');
+        const avatarInitial = document.getElementById('avatarInitial');
+        if (user.photo) {
+          const img = document.createElement('img');
+          img.src = user.photo;
+          avatarContainer.innerHTML = '';
+          avatarContainer.appendChild(img);
+        } else {
+          avatarInitial.textContent = (name || 'A').charAt(0).toUpperCase();
+        }
+
+        const taglineParts = [];
+        if (user.department) taglineParts.push(user.department);
+        taglineParts.push('Full system access');
+        document.getElementById('userTagline').textContent = taglineParts.join(' -  ');
+      } catch (e) {
+        console.error('admin profile load error', e);
+      }
+    }
+
+    async function saveAdminProfile(event) {
+      event.preventDefault();
+      const token = localStorage.getItem('sf_token') || '';
+
+      const body = {
+        department: document.getElementById('adminDeptInput').value || null,
+        phone: document.getElementById('adminPhoneInput').value || null,
+        address: document.getElementById('adminAddressInput').value || null,
+        bio: document.getElementById('adminBioInput').value || null,
+        photo: document.getElementById('adminPhotoInput').value || null,
+      };
+
+      try {
+        const res = await fetch(API_BASE + '/api/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          alert('Failed to save admin profile');
+          return false;
+        }
+        const updated = await res.json();
+
+        // Update read-only
+        document.getElementById('infoDept').textContent = updated.department || 'Not set';
+        document.getElementById('infoPhone').textContent = updated.phone || 'Not set';
+        document.getElementById('infoAddress').textContent = updated.address || 'Not set';
+        document.getElementById('infoBio').textContent = updated.bio || 'No bio added yet.';
+        document.getElementById('adminPhotoInput').value = updated.photo || '';
+
+        // Update avatar preview
+        const avatarContainer = document.getElementById('avatarContainer');
+        if (updated.photo) {
+          const img = document.createElement('img');
+          img.src = updated.photo;
+          avatarContainer.innerHTML = '';
+          avatarContainer.appendChild(img);
+        } else {
+          const name = updated.full_name || localStorage.getItem('sf_name') || 'Admin';
+          avatarContainer.innerHTML = '';
+          const span = document.createElement('span');
+          span.id = 'avatarInitial';
+          span.textContent = (name || 'A').charAt(0).toUpperCase();
+          avatarContainer.appendChild(span);
+        }
+
+        alert('Admin profile saved');
+      } catch (e) {
+        console.error('save admin profile error', e);
+        alert('Error saving admin profile');
+      }
+      return false;
+    }
+
+    function resetAdminProfileForm() {
+      document.getElementById('adminDeptInput').value = '';
+      document.getElementById('adminPhoneInput').value = '';
+      document.getElementById('adminAddressInput').value = '';
+      document.getElementById('adminBioInput').value = '';
+      document.getElementById('adminPhotoInput').value = '';
+    }
+
+    loadAdminProfile();
+  </script>
+</body>
+</html>

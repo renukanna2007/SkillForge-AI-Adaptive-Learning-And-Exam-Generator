@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Courses – SkillForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 20px;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    a.back-link:hover { text-decoration: underline; }
+    h1 { font-size: 24px; margin-bottom: 12px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: #020617;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      padding: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.08s ease;
+    }
+    .card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      border-color: #1d4ed8;
+    }
+    .course-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .course-meta {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <a href="/student-dashboard" class="back-link">← Back to dashboard</a>
+  <h1>My Courses</h1>
+  <div id="coursesContainer">Loading courses...</div>
+
+  <script>
+    async function loadCourses() {
+      const token = localStorage.getItem('sf_token') || '';
+      const container = document.getElementById('coursesContainer');
+      container.textContent = 'Loading courses...';
+
+      try {
+        const res = await fetch('/api/courses', {
+          headers: { Authorization: 'Bearer ' + token },
+          credentials: 'include'
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('courses error', res.status, text);
+          container.textContent = `Failed to load courses (${res.status}).`;
+          return;
+        }
+
+        const courses = await res.json();
+        if (!courses.length) {
+          container.textContent = 'No enrolled courses yet.';
+          return;
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+
+        courses.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          const title = document.createElement('div');
+          title.className = 'course-title';
+          title.textContent = c.title || 'Untitled course';
+
+          const meta = document.createElement('div');
+          meta.className = 'course-meta';
+          meta.textContent =
+            (c.semester || c.level || 'General') +
+            (c.code ? ' • ' + c.code : '');
+
+          const progress = document.createElement('div');
+          progress.className = 'course-meta';
+          const pct = typeof c.progress_percent === 'number'
+            ? c.progress_percent
+            : parseFloat(c.progress_percent || 0);
+          progress.textContent = 'Progress: ' + pct.toFixed(1) + '%';
+
+          const desc = document.createElement('div');
+          desc.style.fontSize = '13px';
+          desc.textContent = c.description || 'No description.';
+
+          card.appendChild(title);
+          card.appendChild(meta);
+          card.appendChild(progress);
+          card.appendChild(desc);
+
+          card.onclick = () => {
+            window.location.href = '/course-detail?course=' + c.id;
+          };
+
+          grid.appendChild(card);
+        });
+
+        container.innerHTML = '';
+        container.appendChild(grid);
+      } catch (e) {
+        console.error(e);
+        container.textContent = 'Error loading courses.';
+      }
+    }
+
+    loadCourses();
+  </script>
+</body>
+</html>

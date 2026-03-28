@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SkillForge • Progress</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1f2937;
+      background: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .left-head {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .left-head h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    .left-head small {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .top-right button {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: transparent;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .section-sub {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 16px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 800px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 600px) {
+      .cards { grid-template-columns: 1fr; }
+    }
+    .card {
+      padding: 14px 12px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: #020617;
+    }
+    .card-title {
+      font-size: 13px;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .card-value {
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .card-foot {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    .table th, .table td {
+      border-bottom: 1px solid #111827;
+      padding: 8px 6px;
+      text-align: left;
+    }
+    .table th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #9ca3af;
+      background: #020617;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid #1f2937;
+    }
+    .tag-green {
+      border-color: #16a34a;
+      color: #bbf7d0;
+      background: rgba(22, 163, 74, 0.1);
+    }
+    .tag-amber {
+      border-color: #f59e0b;
+      color: #fde68a;
+      background: rgba(245, 158, 11, 0.1);
+    }
+    .tag-red {
+      border-color: #dc2626;
+      color: #fecaca;
+      background: rgba(220, 38, 38, 0.1);
+    }
+
+    .pill-nav {
+      margin-bottom: 8px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      font-size: 11px;
+      cursor: pointer;
+      color: #9ca3af;
+    }
+    .pill.active {
+      border-color: #6366f1;
+      color: #e5e7eb;
+      background: #02041a;
+    }
+
+    .back-link {
+      font-size: 12px;
+      color: #60a5fa;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .empty-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="left-head">
+    <h1>Progress</h1>
+    <small id="studentMeta">Loading student info…</small>
+  </div>
+  <div class="top-right">
+    <button id="logoutBtn">Logout</button>
+  </div>
+</header>
+
+<main>
+  <a class="back-link" href="/student-dashboard">
+    ← Back to dashboard
+  </a>
+
+  <h2 class="section-title">Your learning progress</h2>
+  <p class="section-sub">Overview of course completion and recent exam / quiz performance.</p>
+
+  <!-- Top summary cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-title">Enrolled courses</div>
+      <div class="card-value" id="cardCourses">–</div>
+      <div class="card-foot">From your enrollments</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Average completion</div>
+      <div class="card-value" id="cardCompletion">–%</div>
+      <div class="card-foot">Across all enrolled courses</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recent exam score</div>
+      <div class="card-value" id="cardRecentScore">–</div>
+      <div class="card-foot" id="cardRecentLabel">Last quiz / AI exam</div>
+    </div>
+  </div>
+
+  <!-- Courses table -->
+  <section style="margin-top: 18px;">
+    <h3 class="section-title" style="font-size:15px;">Courses</h3>
+    <p class="section-sub">Completion status per course based on enrollments.</p>
+
+    <table class="table" id="coursesTable">
+      <thead>
+        <tr>
+          <th>Course</th>
+          <th>Level / Semester</th>
+          <th>Completion</th>
+        </tr>
+      </thead>
+      <tbody id="coursesTbody">
+      </tbody>
+    </table>
+    <p class="empty-text" id="coursesEmpty" style="display:none;">
+      No enrolled courses found yet.
+    </p>
+  </section>
+
+  <!-- Exams & quizzes -->
+  <section style="margin-top: 24px;">
+    <h3 class="section-title" style="font-size:15px;">Exams & quizzes</h3>
+    <p class="section-sub">Scores from manual quizzes and AI generated exams.</p>
+
+    <div class="pill-nav">
+      <button class="pill active" data-filter="all">All</button>
+      <button class="pill" data-filter="quiz">Quizzes</button>
+      <button class="pill" data-filter="ai">AI exams</button>
+    </div>
+
+    <table class="table" id="examsTable">
+      <thead>
+        <tr>
+          <th>Exam</th>
+          <th>Type</th>
+          <th>Score</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="examsTbody">
+      </tbody>
+    </table>
+    <p class="empty-text" id="examsEmpty" style="display:none;">
+      No exam or quiz attempts yet.
+    </p>
+  </section>
+</main>
+
+<script>
+  const API_BASE = '';
+
+  function getStoredStudent() {
+    const name = localStorage.getItem('sf_name') || '';
+    const email = localStorage.getItem('sf_email') || '';
+    const role = localStorage.getItem('sf_role') || 'student';
+    return { name, email, role };
+  }
+
+  function applyStudentInfo() {
+    const { name, email } = getStoredStudent();
+    const metaEl = document.getElementById('studentMeta');
+
+    if (name) {
+      metaEl.textContent = `Signed in as ${name}`;
+    } else if (email) {
+      metaEl.textContent = `Signed in as ${email}`;
+    } else {
+      metaEl.textContent = 'Signed in as student';
+    }
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (e) {}
+    localStorage.removeItem('sf_token');
+    localStorage.removeItem('sf_role');
+    localStorage.removeItem('sf_name');
+    localStorage.removeItem('sf_email');
+    window.location.href = '/login.html';
+  });
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString();
+  }
+
+  function gradeTag(scorePercent) {
+    if (scorePercent >= 80) return '<span class="tag tag-green">Strong</span>';
+    if (scorePercent >= 50) return '<span class="tag tag-amber">Average</span>';
+    return '<span class="tag tag-red">Needs focus</span>';
+  }
+
+  // keep this, but no longer used; safe to keep for now
+  function applyCoursesToCards(courses) {
+    const cardCourses = document.getElementById('cardCourses');
+    const cardCompletion = document.getElementById('cardCompletion');
+
+    const count = courses.length;
+    cardCourses.textContent = count.toString();
+
+    if (count === 0) {
+      cardCompletion.textContent = '0%';
+      return;
+    }
+
+    const avg =
+      courses.reduce((sum, c) => sum + (Number(c.completion) || 0), 0) / count;
+    cardCompletion.textContent = Math.round(avg) + '%';
+  }
+
+  function applyExamsToCards(examsCombined) {
+    const cardRecentScore = document.getElementById('cardRecentScore');
+    const cardRecentLabel = document.getElementById('cardRecentLabel');
+
+    if (!examsCombined.length) {
+      cardRecentScore.textContent = '–';
+      cardRecentLabel.textContent = 'No attempts yet';
+      return;
+    }
+
+    const latest = examsCombined[0]; // already sorted desc in API
+    const pct = latest.total ? Math.round((latest.score / latest.total) * 100) : null;
+    if (pct == null) {
+      cardRecentScore.textContent = `${latest.score}/${latest.total || '-'}`;
+    } else {
+      cardRecentScore.textContent = `${pct}%`;
+    }
+    cardRecentLabel.textContent = latest.name || 'Recent attempt';
+  }
+
+  async function loadProgress() {
+    const token = localStorage.getItem('sf_token') || '';
+    const headers = { 'Authorization': 'Bearer ' + token };
+
+    // --- UPDATED: use /api/progress for courses + average ---
+    let coursesForTable = [];
+    let averageCompletion = 0;
+
+    try {
+      const res = await fetch(API_BASE + '/api/progress', {
+        headers,
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+
+        coursesForTable = (data.courses || []).map(c => ({
+          title: c.course_title,
+          level: c.level_or_sem,
+          completion: Number(c.completion_percent) || 0
+        }));
+
+        averageCompletion = Number(data.average_completion) || 0;
+      }
+
+      const tbody = document.getElementById('coursesTbody');
+      const empty = document.getElementById('coursesEmpty');
+      tbody.innerHTML = '';
+
+      if (!coursesForTable.length) {
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        coursesForTable.forEach(c => {
+          const pct = Number(c.completion) || 0;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${c.title || 'Course'}</td>
+            <td>${c.level || '-'}</td>
+            <td>${pct}%</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      const cardCourses = document.getElementById('cardCourses');
+      const cardCompletion = document.getElementById('cardCompletion');
+      cardCourses.textContent = coursesForTable.length.toString();
+      cardCompletion.textContent = averageCompletion + '%';
+    } catch (e) {
+      console.error('progress courses error', e);
+    }
+
+    // 2) Quizzes + AI exams (unchanged)
+    const examsCombined = [];
+    try {
+      const quizRes = await fetch(API_BASE + '/api/quiz-results', {
+        headers,
+        credentials: 'include'
+      });
+      if (quizRes.ok) {
+        const quizRows = await quizRes.json();
+        quizRows.forEach(r => {
+          examsCombined.push({
+            type: 'quiz',
+            name: r.quiz_name,
+            score: r.score,
+            total: r.max_score,
+            date: r.created_at
+          });
+        });
+      }
+
+      const aiRes = await fetch(API_BASE + '/api/ai-exams', {
+        headers,
+        credentials: 'include'
+      });
+      if (aiRes.ok) {
+        const aiExams = await aiRes.json();
+        // still not listing AI exam scores here
+      }
+    } catch (e) {
+      console.error('progress exams error', e);
+    }
+
+    examsCombined.sort((a, b) => {
+      return new Date(b.date || 0) - new Date(a.date || 0);
+    });
+
+    applyExamsToCards(examsCombined);
+
+    const tbodyExams = document.getElementById('examsTbody');
+    const emptyExams = document.getElementById('examsEmpty');
+    tbodyExams.innerHTML = '';
+
+    if (!examsCombined.length) {
+      emptyExams.style.display = 'block';
+    } else {
+      emptyExams.style.display = 'none';
+      examsCombined.forEach(row => {
+        const pct = row.total ? Math.round((row.score / row.total) * 100) : null;
+        const scoreLabel = pct != null
+          ? `${row.score}/${row.total} (${pct}%)`
+          : `${row.score}/${row.total || '-'}`;
+
+        const tr = document.createElement('tr');
+        tr.dataset.type = row.type;
+        tr.innerHTML = `
+          <td>${row.name || 'Exam'}</td>
+          <td>${row.type === 'quiz' ? 'Quiz' : 'AI exam'}</td>
+          <td>${scoreLabel} ${pct != null ? gradeTag(pct) : ''}</td>
+          <td>${formatDate(row.date)}</td>
+        `;
+        tbodyExams.appendChild(tr);
+      });
+    }
+
+    const pills = document.querySelectorAll('.pill');
+    pills.forEach(p => {
+      p.addEventListener('click', () => {
+        pills.forEach(x => x.classList.remove('active'));
+        p.classList.add('active');
+        const filter = p.getAttribute('data-filter');
+
+        const rows = tbodyExams.querySelectorAll('tr');
+        let visibleCount = 0;
+        rows.forEach(r => {
+          const type = r.dataset.type;
+          if (filter === 'all' || type === filter) {
+            r.style.display = '';
+            visibleCount++;
+          } else {
+            r.style.display = 'none';
+          }
+        });
+
+        emptyExams.style.display = visibleCount === 0 ? 'block' : 'none';
+      });
+    });
+  }
+
+  applyStudentInfo();
+  loadProgress();
+</script>
+</body>
+</html>

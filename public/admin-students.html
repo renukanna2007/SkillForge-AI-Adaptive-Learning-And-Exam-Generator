@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Students – SkillForge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #1f2937;
+      background: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    main {
+      padding: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    a.back-link:hover { text-decoration: underline; }
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    input, select {
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      color: #e5e7eb;
+      padding: 4px 8px;
+      font-size: 13px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid #1f2937;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      background: #030712;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background: #020819;
+    }
+    .empty {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Admin Students</h1>
+  <button id="logoutBtn" style="padding:4px 10px;border-radius:999px;border:1px solid #4b5563;background:transparent;color:#e5e7eb;cursor:pointer;">
+    Logout
+  </button>
+</header>
+
+<main>
+  <a href="/admin-dashboard" class="back-link">← Back to admin dashboard</a>
+
+  <div class="filters">
+    <input id="searchInput" placeholder="Search name or email..." />
+    <select id="deptFilter">
+      <option value="">All departments</option>
+    </select>
+    <select id="yearFilter">
+      <option value="">All years</option>
+    </select>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Joined</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Roll</th>
+        <th>Dept</th>
+        <th>Year</th>
+      </tr>
+    </thead>
+    <tbody id="studentsBody">
+      <tr><td colspan="6">Loading students...</td></tr>
+    </tbody>
+  </table>
+
+  <div class="empty" id="emptyMsg" style="display:none;">
+    No students found for this filter.
+  </div>
+</main>
+
+<script>
+  const API_BASE = '';
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+      await fetch(API_BASE + '/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {}
+    localStorage.clear();
+    window.location.href = '/login.html';
+  });
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString();
+  }
+
+  let allStudents = [];
+
+  function renderStudents() {
+    const tbody = document.getElementById('studentsBody');
+    const empty = document.getElementById('emptyMsg');
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const dept = document.getElementById('deptFilter').value;
+    const year = document.getElementById('yearFilter').value;
+
+    tbody.innerHTML = '';
+
+    const filtered = allStudents.filter(s => {
+      if (dept && (s.department || '') !== dept) return false;
+      if (year && (s.year || '') !== year) return false;
+      if (q) {
+        const hay = ((s.full_name || '') + ' ' + (s.email || '')).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="6">No students.</td></tr>';
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+
+    filtered.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${formatDate(s.created_at)}</td>
+        <td>${s.full_name || ''}</td>
+        <td>${s.email || ''}</td>
+        <td>${s.roll_number || ''}</td>
+        <td>${s.department || ''}</td>
+        <td>${s.year || ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function loadStudents() {
+    const token = localStorage.getItem('sf_token') || '';
+    const tbody = document.getElementById('studentsBody');
+    const deptSel = document.getElementById('deptFilter');
+    const yearSel = document.getElementById('yearFilter');
+
+    tbody.innerHTML = '<tr><td colspan="6">Loading students...</td></tr>';
+
+    try {
+      const res = await fetch(API_BASE + '/api/admin/students', {
+        headers: { Authorization: 'Bearer ' + token },
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('students error', res.status, text);
+        tbody.innerHTML = '<tr><td colspan="6">Failed to load students.</td></tr>';
+        return;
+      }
+      const rows = await res.json();
+      allStudents = rows || [];
+
+      // fill filters
+      const deptSet = new Set();
+      const yearSet = new Set();
+      allStudents.forEach(s => {
+        if (s.department) deptSet.add(s.department);
+        if (s.year) yearSet.add(s.year);
+      });
+
+      deptSel.innerHTML = '<option value="">All departments</option>';
+      deptSet.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        deptSel.appendChild(opt);
+      });
+
+      yearSel.innerHTML = '<option value="">All years</option>';
+      yearSet.forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSel.appendChild(opt);
+      });
+
+      renderStudents();
+    } catch (e) {
+      console.error('students load error', e);
+      tbody.innerHTML = '<tr><td colspan="6">Error loading students.</td></tr>';
+    }
+  }
+
+  document.getElementById('searchInput').addEventListener('input', renderStudents);
+  document.getElementById('deptFilter').addEventListener('change', renderStudents);
+  document.getElementById('yearFilter').addEventListener('change', renderStudents);
+
+  loadStudents();
+</script>
+</body>
+</html>
